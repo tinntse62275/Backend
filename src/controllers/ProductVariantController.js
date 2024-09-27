@@ -13,15 +13,15 @@ let create = async (req, res, next) => {
             return res.status(400).send(err);
         }
         let quantity = parseInt(req.body.quantity);
-        if (quantity === undefined) return res.status(400).send('Trường quantity không tồn tại');
+        if (quantity === undefined) return res.status(400).send('The quantity field does not exist');
         let product_id = parseInt(req.body.product_id);
-        if (product_id === undefined) return res.status(400).send('Trường product_id không tồn tại');
+        if (product_id === undefined) return res.status(400).send('The product_id field does not exist');
         let colour_id = parseInt(req.body.colour_id);
-        if (colour_id === undefined) return res.status(400).send('Trường colour_id không tồn tại');
+        if (colour_id === undefined) return res.status(400).send('The colour_id field does not exist');
         let size_id = parseInt(req.body.size_id);
-        if (size_id === undefined) return res.status(400).send('Trường size_id không tồn tại');
+        if (size_id === undefined) return res.status(400).send('The size_id field does not exist');
         let files = req.files;
-        if (files === undefined) return res.status(400).send('Trường files không tồn tại');
+        if (files === undefined) return res.status(400).send('The files field does not exist');
 
         try {
             let data = {
@@ -41,7 +41,7 @@ let create = async (req, res, next) => {
             return res.send(newProductVariant)
         } catch (err) {
             console.log(err);
-            return res.status(500).send('Gặp lỗi khi tải dữ liệu vui lòng thử lại');
+            return res.status(500).send('An error occurred while loading data, please try again');
         }
     })
 }
@@ -53,18 +53,18 @@ let update = async (req, res, next) => {
             return res.status(400).send(err);
         }
         let product_variant_id = parseInt(req.body.product_variant_id);
-        if (product_variant_id === undefined) return res.status(400).send('Trường product_variant_id không tồn tại');
+        if (product_variant_id === undefined) return res.status(400).send('The product_variant_id field does not exist');
         let quantity = parseInt(req.body.quantity);
-        if (quantity === undefined) return res.status(400).send('Trường quantity không tồn tại');
+        if (quantity === undefined) return res.status(400).send('The quantity field does not exist');
         let files = req.files;
-        if (files === undefined) return res.status(400).send('Trường files không tồn tại');
+        if (files === undefined) return res.status(400).send('The files field does not exist');
 
         try {
             let productVariant = await Product_Variant.findOne({
                 where: { product_variant_id },
                 include: { model: Product_Image, attributes: ['image_id', 'path'] }
             });
-            if (!productVariant) return res.status(400).send('Product Variant này không tồn tại');
+            if (!productVariant) return res.status(400).send('This product variant does not exist');
 
             for (let file of files) {
                 fileName = file.path.slice(-40, file.path.length)
@@ -84,10 +84,10 @@ let update = async (req, res, next) => {
 
             await productVariant.update({ quantity })
 
-            return res.send({ message: "Cập nhật biến thể sản phẩm thành công!" })
+            return res.send({ message: "Successfully updated product variant!" })
         } catch (err) {
             console.log(err);
-            return res.status(500).send('Gặp lỗi khi tải dữ liệu vui lòng thử lại');
+            return res.status(500).send('An error occurred while loading data, please try again');
         }
     })
 }
@@ -95,61 +95,60 @@ let update = async (req, res, next) => {
 let onState = async (req, res, next) => {
     try {
         let product_variant_ids = req.body.product_variant_ids;
-        if (product_variant_ids === undefined) return res.status(400).send('Trường product_variant_ids không tồn tại');
+        if (product_variant_ids === undefined) return res.status(400).send('The product_variant_ids field does not exist');
         await Product_Variant.update(
             { state: true },
             { where: { product_variant_id: product_variant_ids } }
         )
-        return res.send({ message: 'Mở bán biến thể sản phẩm thành công!' })
+        return res.send({ message: 'Successfully activated the product variant for sale!' })
     } catch (err) {
         console.log(err)
-        return res.status(500).send('Gặp lỗi khi tải dữ liệu vui lòng thử lại');
+        return res.status(500).send('An error occurred while loading data, please try again');
     }
 }
 
 let offState = async (req, res, next) => {
     try {
         let product_variant_ids = req.body.product_variant_ids;
-        if (product_variant_ids === undefined) return res.status(400).send('Trường product_variant_ids không tồn tại');
+        if (product_variant_ids === undefined) return res.status(400).send('The product_variant_ids field does not exist');
         Product_Variant.update(
             { state: false },
             { where: { product_variant_id: product_variant_ids } }
         )
-        return res.send({ message: 'Tắt biến thể sản phẩm thành công!' })
+        return res.send({ message: 'Successfully deactivated the product variant!' })
     } catch (err) {
         console.log(err)
-        return res.status(500).send('Gặp lỗi khi tải dữ liệu vui lòng thử lại');
+        return res.status(500).send('An error occurred while loading data, please try again');
     }
 }
 
 let updateQuantity = async (req, res, next) => {
     try {
         let product_variant_ids = req.body.product_variant_ids;
-        if (product_variant_ids === undefined) return res.status(400).send('Trường product_variant_ids không tồn tại');
+        if (product_variant_ids === undefined) return res.status(400).send('The product_variant_ids field does not exist');
         let newQuantity = req.body.quantity;
-        if (newQuantity === undefined) return res.status(400).send('Trường quantity không tồn tại');
+        if (newQuantity === undefined) return res.status(400).send('The quantity field does not exist');
 
         await Product_Variant.update(
             { quantity: newQuantity },
             { where: { product_variant_id: product_variant_ids } }
         )
-        return res.send({ message: 'Cập nhật tồn kho cho biến thể sản phẩm thành công!' })
+        return res.send({ message: 'Successfully updated the inventory for the product variant!' })
     } catch (err) {
         console.log(err)
-        return res.status(500).send('Gặp lỗi khi tải dữ liệu vui lòng thử lại');
+        return res.status(500).send('An error occurred while loading data, please try again');
     }
 }
 
 let deleteProductVariant = async (req, res, next) => {
     let product_variant_ids = req.body.product_variant_ids;
-    if (product_variant_ids === undefined) return res.status(400).send('Trường product_variant_ids không tồn tại');
-
+    if (product_variant_ids === undefined) return res.status(400).send('The product_variant_ids field does not exist');
 
     try {
         let productVariant
         for (let product_variant_id of product_variant_ids) {
             productVariant = await Product_Variant.findOne({ where: { product_variant_id } });
-            if (!productVariant) return res.status(400).send('Product Variant này không tồn tại');
+            if (!productVariant) return res.status(400).send('This product variant does not exist');
         }
 
         await Product_Variant.destroy(
@@ -161,20 +160,20 @@ let deleteProductVariant = async (req, res, next) => {
         let count = await product.countProduct_variants()
         if (count == 0) await product.destroy()
 
-        return res.send({ message: 'Xóa biến thể sản phẩm thành công' })
+        return res.send({ message: 'Successfully deleted the product variant' })
     } catch (err) {
         console.log(err)
-        return res.status(500).send('Gặp lỗi khi tải dữ liệu vui lòng thử lại');
+        return res.status(500).send('An error occurred while loading data, please try again');
     }
 }
 
 let detailCustomerSide = async (req, res, next) => {
     let product_id = req.params.product_id;
-    if (product_id === undefined) return res.status(400).send('Trường product_id không tồn tại');
+    if (product_id === undefined) return res.status(400).send('The product_id field does not exist');
     let colour_id = req.params.colour_id;
-    if (colour_id === undefined) return res.status(400).send('Trường colour_id không tồn tại');
+    if (colour_id === undefined) return res.status(400).send('The colour_id field does not exist');
     let size_id = req.params.size_id;
-    if (size_id === undefined) return res.status(400).send('Trường size_id không tồn tại');
+    if (size_id === undefined) return res.status(400).send('The size_id field does not exist');
 
     try {
         let productVariant = await Product_Variant.findOne({
@@ -203,7 +202,7 @@ let detailCustomerSide = async (req, res, next) => {
         return res.send(newProductVariant);
     } catch (err) {
         console.log(err);
-        return res.status(500).send('Gặp lỗi khi tải dữ liệu vui lòng thử lại');
+        return res.status(500).send('An error occurred while loading data, please try again');
     }
 }
 

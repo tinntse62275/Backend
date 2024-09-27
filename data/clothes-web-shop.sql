@@ -24,7 +24,7 @@ SET time_zone = "+00:00";
 -- Dumping data for table `User`
 --
 
-INSERT INTO `User` (`user_id`, `email`, `password`, `role_id`) VALUES
+INSERT INTO `Users` (`user_id`, `email`, `password`, `role_id`) VALUES
 ('14f40b93-5f1e-459f-b2ea-fa72ce724fc8', 'hung@gmail.com', '$2b$10$oC7gN6VwK1kEEWAgKApuTOinjTHqf/OSysOhU96nEwhS.8BBx37VO', 2),
 ('1ca2f9f9-6f0a-4bb1-b404-bfca5d900c6c', 'minh@gmail.com', '$2b$10$wbiTajwynughf0pBJv97b.tByg4SVWDIstXZXttKyHLmIRYB275lC', 2),
 ('48dc67cb-4f4b-451a-858d-ab4871a74ce8', 'duy@gmail.com', '$2b$10$5GVDobChG8UQomWlN28N/uUT8RgVtzJQBI6QXjFETE/eIPhp/p06e', 2),
@@ -40,7 +40,7 @@ INSERT INTO `User` (`user_id`, `email`, `password`, `role_id`) VALUES
 -- Dumping data for table `customer_infos`
 --
 
-INSERT INTO `Customer_Info` (`customer_info_id`, `customer_name`, `phone_number`, `address`, `user_id`) VALUES
+INSERT INTO `Customer_Infos` (`customer_info_id`, `customer_name`, `phone_number`, `address`, `user_id`) VALUES
 (1, 'Nguyễn Thanh Danh', '0932528331', '51A9 Đường Trần Nam Phú, Phường An Khánh, Quận Ninh Kiều, Thành Phố Cần Thơ', '8d097ddc-c9a2-4c0a-8e60-bdc7c115d519'),
 (2, 'Nguyễn Trần Quốc Duy', '0932528331', '51A9 Đường Trần Nam Phú, Phường An Khánh, Quận Ninh Kiều, Thành Phố Cần Thơ', '48dc67cb-4f4b-451a-858d-ab4871a74ce8'),
 (3, 'Trần Đình Hưng', '0932528331', '51A9 Đường Trần Nam Phú, Phường An Khánh, Quận Ninh Kiều, Thành Phố Cần Thơ', '14f40b93-5f1e-459f-b2ea-fa72ce724fc8'),
@@ -54,39 +54,40 @@ INSERT INTO `Customer_Info` (`customer_info_id`, `customer_name`, `phone_number`
 -- Dumping data for table `categories`
 --
 
-INSERT INTO `Category` (`category_id`, `title`, `level`, `parent_id`) VALUES
-(1, 'Áo Nam', 1, NULL),
-(2, 'Quần Nam', 1, NULL),
-(3, 'Quần Lót Nam', 1, NULL),
-(4, 'Áo T-Shirt', 2, 1),
-(5, 'Áo Polo', 2, 1),
-(6, 'Áo Sơ Mi', 2, 1),
-(7, 'Quần Short', 2, 2),
-(8, 'Quần Jeans', 2, 2),
-(9, 'Quần Brief (Tam Giác)', 2, 3),
-(10, 'Quần Trunk (Boxer)', 2, 3),
-(11, 'Quần Brief Boxer (Boxer Dài)', 2, 3);
+INSERT INTO `Categories` (`category_id`, `title`, `level`, `parent_id`) VALUES
+(1, 'Mens Shirts', 1, NULL),
+(2, 'Mens Pants', 1, NULL),
+(3, 'Mens Underwear', 1, NULL),
+(4, 'T-Shirt', 2, 1),
+(5, 'Polo Shirt', 2, 1),
+(6, 'Dress Shirt', 2, 1),
+(7, 'Shorts', 2, 2),
+(8, 'Jeans', 2, 2),
+(9, 'Briefs (Triangle)', 2, 3),
+(10, 'Trunks (Boxers)', 2, 3),
+(11, 'Boxer Briefs (Long Boxer)', 2, 3);
+
 
 --
 -- Dumping data for table `colours`
 --
 
-INSERT INTO `Colour` (`colour_id`, `colour_name`) VALUES
-(1, 'Trắng'),
-(2, 'Đen'),
-(3, 'Xám'),
-(4, 'Xám Đen'),
-(5, 'Xanh Đậm'),
-(6, 'Xanh Nhạt'),
-(7, 'Xanh Aqua'),
-(8, 'Xanh Navy'),
-(9, 'Xanh Rêu');
+INSERT INTO `Colours` (`colour_id`, `colour_name`) VALUES
+(1, 'White'),
+(2, 'Black'),
+(3, 'Gray'),
+(4, 'Dark Gray'),
+(5, 'Dark Blue'),
+(6, 'Light Blue'),
+(7, 'Aqua'),
+(8, 'Navy Blue'),
+(9, 'Olive Green');
 
 --
 -- Dumping data for table `sizes`
 --
 
-INSERT INTO `Size` (`size_id`, `size_name`) VALUES
+INSERT INTO `Sizes` (`size_id`, `size_name`) VALUES
 (1, 'S'),
 (2, 'M'),
 (3, 'L'),
@@ -100,15 +101,15 @@ INSERT INTO `Size` (`size_id`, `size_name`) VALUES
 -- Dumping data for table `products`
 --
 
-INSERT INTO `Product` (`product_id`, `product_name`, `description`, `rating`, `sold`, `feedback_quantity`, `created_at`, `deleted_at`, `category_id`) VALUES
-(1, 'Áo thun thể thao nam Active ProMax', '<h4>Đặc điểm nổi bật Áo thun thể thao nam Active ProMax</h4><p>Nếu bạn đã sử dụng chiếc Áo thể thao nam Promax-S1 thì không nên thể bỏ lỡ chiếc áo thun thể thao nam Active Promax bởi những đặc điểm nổi bật :</p><ul><li>Công nghệ xử lý hoàn thiện: Quick-Dry (Nhanh khô) và Wicking (thấm hút nhanh).</li><li>Đây còn là chiếc áo được dệt và nhuộm theo quy trình không nước thải, hướng đến mục tiêu thời trang bền vững.</li><li>Không nhăn và tạo cảm giác thoáng mát khi vận động.</li></ul><h4>Chất liệu Áo thun thể thao nam Active ProMax</h4><p>Vẫn là chất liệu đặc trưng 100% Recycle Polyester chiếc áo thun thể thao này đi theo hướng thời trang bền vững, được may theo công nghệ Wicking (thấm hút) và Quickdry (nhanh khô).</p><p>Được sản xuất và hoàn thiện tại nhà máy Nobland, Bình Dương - thuộc tập đoàn Nobland, một tập đoàn về sản xuất đồ may mặc lớn trên thị trường và nhà máy Nobland được thành lập tại Việt Nam từ năm 2003.</p><p>Chúng tôi luôn tự hào về những nơi sản xuất ra những chiếc áo thun nam để có thể phục vụ các bạn.</p><h4>Thiết kế Áo thun thể thao nam Active ProMax</h4><p>Với thiết kế kiểu dáng áo thun nam dáng suông giúp các nam giới có thể chơi thể thao tự tin, thoải mái nhất.Kiểu dáng áo thun thể thao vừa vặn với dáng nam giới Việt Nam tạo nên sự năng động, cá tính khi chơi thể thao.</p><h4>Cách bảo quản áo thun thể thao nam Active Promax</h4><p><strong>Cách sử dụng:&nbsp;</strong><br>Nên giặt với nước lạnh dưới 40 độ và tuyệt đối không nên giặt với nước nóng sẽ làm co giãn sợi vải và bị dão áo.<br>Không nên phơi trực tiếp bề mặt áo phải dưới ánh nắng mặt trời và nên sử dụng móc treo đồ để tránh gây nếp nhăn cho áo thun thể thao.<br><strong>Bảo quản:</strong><br>Không nên để áo thun ở những nơi ẩm ướt, với tính chất hút ẩm, hút nước tốt, áo thun dễ bị ẩm mốc, thậm chí để lại những vết ố trên vải áo.</p>', 2.6667, 5, 3, '2023-03-04 03:40:56', NULL, 4),
-(2, 'Quần Jeans Clean Denim dáng Regular S3', '<h4>Đặc điểm nổi bật Quần Jeans Clean Denim dáng Regular S3</h4><p>Với nguyên liệu và quy cách nhuộm mới đảm bảo sẽ là chiếc Jeans bền màu và thân thiện môi trường hãy cùng xem những quy trình nổi bật &nbsp;để tạo ra chiếc quần Jeans này nhé:</p><ul><li>Sợi vải được nhuộm theo quy trình sạch và bền vững</li><li>Định lượng vải siêu nhẹ mang lại cảm giác thoải mái</li><li>Quần có độ co giãn tốt 4 chiều</li><li>Định lượng vải nhẹ chỉ với 13.7 Oz</li></ul><h4>Thiết kế của quần Jeans Clean Denim dáng Regular S3</h4><p>Với tiêu chí luôn mang lại \"sự thoải mái\" lên hàng đầu chúng tôi đã đưa vào chiếc quần Jeans nam với những thiết kế rất tỉ mỉ và chất lượng</p><ul><li>Co giãn tốt với chất liệu Cotton kết hợp Elastane đem đến độ co giãn thoải mái</li><li>Túi sâu đựng những sản phẩm cá nhân tiện lợi</li><li>Kiểu dáng Slimfit, co giãn tốt, không bo ống phù hợp mặc đa chức năng</li></ul><h4>Chất liệu quần Jeans Clean Denim dáng Regular S3</h4><ul><li>Vải Denim được dệt toàn bộ tại nhà máy Nhơn Trạch, Đồng Nai của Saitex</li><li>Chất liệu: 99% Regenerative Cotton (Cotton Tái sinh) + 1% Elastane, tạo sự co giãn đem đến sự thoải mái khi vận động</li><li>Định lượng vải nhẹ chỉ với 13.7 Oz</li><li>Kéo sợi và dệt nhuộm theo quy trình sạch và bền vững tại Việt Nam</li></ul><h4>Cách mix đồ với quần Jeans Clean Denim dáng Regular S3</h4><p>Ngoài những chiếc quần short thì với bất kì chàng trai nào trong tủ đồ cũng cần phải có một chiếc quần jeans nam, mỗi khi bước xuống phố thì một set đồ bao gồm chiếc quần jeans phối cùng chiếc áo thun, hay một chiếc áo polo sẽ khiến cho chàng trai trở nên gọn gàng và lịch lãm hơn rất nhiều.</p><p>&nbsp;</p><h4>Cách bảo quản quần Jeans Clean Denim dáng Regular S3</h4><ul><li>Không giặt quần jean thường xuyên: Quần Jeans đen rất dễ bị bay màu theo thời gian.</li><li>Lộn mặt trái ra bên ngoài khi giặt: Lộn mặt trái ra bên ngoài sẽ giúp mặt nhuộm màu không tiếp xúc nhiều với nước và xà phòng.</li><li>Chọn chu kỳ quay và nhiệt độ thấp nhất: Thuốc nhuộm của quần jeans dễ bị nhả màu khi giặt giũ là do chịu áp lực quay của máy giặt cũng như nhiệt độ của nước.</li><li>Sử dụng nước giặt có độ tẩy nhẹ hoặc nước giặt giữ màu: Hiện nay trên thị trường có rất nhiều nước giặt giữ màu sắc quần.</li></ul>', 0, 3, 0, '2023-03-04 03:50:20', NULL, 8);
+INSERT INTO `Products` (`product_id`, `product_name`, `description`, `rating`, `sold`, `feedback_quantity`, `created_at`, `deleted_at`, `category_id`) VALUES
+(1, 'Active ProMax Mens Sports T-Shirt', '<h4>Highlights of the Active ProMax Mens Sports T-Shirt</h4><p>If you have used the Promax-S1 Mens Sports Shirt, you should not miss the Active ProMax Mens Sports T-Shirt due to its outstanding features:</p><ul><li>Finishing treatment technology: Quick-Dry and Wicking.</li><li>This is also a shirt woven and dyed according to a waterless process, aiming for sustainable fashion.</li><li>Wrinkle-free and provides a cool feeling during exercise.</li></ul><h4>Material of the Active ProMax Mens Sports T-Shirt</h4><p>Still the characteristic material of 100% Recycle Polyester, this sports t-shirt follows sustainable fashion, made with Wicking and Quickdry technology.</p><p>Manufactured and completed at Nobland factory, Binh Duong - part of Nobland Group, a large garment manufacturing corporation in the market, with the Nobland factory established in Vietnam since 2003.</p><p>We are always proud of the places that produce these mens t-shirts to serve you.</p><h4>Design of the Active ProMax Mens Sports T-Shirt</h4><p>With a loose fit design, it helps men feel confident and comfortable when playing sports. The shirt fits well with the physique of Vietnamese men, creating a dynamic and stylish look while exercising.</p><h4>How to care for the Active ProMax Mens Sports T-Shirt</h4><p><strong>Usage:</strong><br>It is advisable to wash with cold water under 40 degrees and absolutely do not wash with hot water as it will cause the fabric fibers to shrink and the shirt to sag.<br>Avoid drying the shirt directly under sunlight and use hangers to avoid wrinkles for the sports t-shirt.<br><strong>Storage:</strong><br>Do not leave the t-shirt in damp places, as it has good moisture absorption, it can easily become moldy and even leave stains on the fabric.</p>', 2.6667, 5, 3, '2023-03-04 03:40:56', NULL, 4),
+(2, 'Regular Fit Clean Denim Jeans S3', '<h4>Highlights of the Regular Fit Clean Denim Jeans S3</h4><p>With new materials and dyeing methods, these jeans are guaranteed to be colorfast and environmentally friendly. Lets look at the outstanding processes to create these jeans:</p><ul><li>The fabric is dyed using a clean and sustainable process.</li><li>Super lightweight fabric provides comfort.</li><li>Jeans have good four-way stretch.</li><li>Lightweight fabric weighing only 13.7 Oz.</li></ul><h4>Design of the Regular Fit Clean Denim Jeans S3</h4><p>With the criterion of always prioritizing "comfort," we have incorporated meticulous designs and quality into these mens jeans.</p><ul><li>Good stretch with a blend of Cotton and Elastane for comfortable elasticity.</li><li>Deep pockets for personal items.</li><li>Slim fit design, good stretch, not tapered at the ankle, suitable for multifunctional wear.</li></ul><h4>Material of the Regular Fit Clean Denim Jeans S3</h4><ul><li>Denim fabric is fully woven at Saitex’s Nhon Trach factory, Dong Nai.</li><li>Material: 99% Regenerative Cotton + 1% Elastane, providing stretch for comfort while moving.</li><li>Lightweight fabric weighing only 13.7 Oz.</li><li>Yarn and dyeing follow a clean and sustainable process in Vietnam.</li></ul><h4>How to style the Regular Fit Clean Denim Jeans S3</h4><p>In addition to shorts, every guy should have a pair of mens jeans in their wardrobe. Whenever stepping out, a set of jeans paired with a t-shirt or a polo shirt will make a guy look tidy and elegant.</p><h4>How to care for the Regular Fit Clean Denim Jeans S3</h4><ul><li>Do not wash jeans frequently: Black jeans can easily fade over time.</li><li>Turn the jeans inside out when washing: Turning them inside out helps the dyed side not to come into much contact with water and detergent.</li><li>Select the lowest spin cycle and temperature: The dye of jeans can fade due to the spinning pressure of the washing machine as well as the water temperature.</li><li>Use mild detergent or color-safe detergent: There are many color-safe detergents available on the market today.</li></ul>', 0, 3, 0, '2023-03-04 03:50:20', NULL, 8);
 
 --
 -- Dumping data for table `product_price_histories`
 --
 
-INSERT INTO `Product_Price_History` (`product_id`, `created_at`, `price`) VALUES
+INSERT INTO `Product_Price_Histories` (`product_id`, `created_at`, `price`) VALUES
 (1, '2023-03-04 03:40:56', 179000),
 (2, '2023-03-04 03:50:20', 599000);
 
@@ -116,7 +117,7 @@ INSERT INTO `Product_Price_History` (`product_id`, `created_at`, `price`) VALUES
 -- Dumping data for table `product_variants`
 --
 
-INSERT INTO `product_variant` (`product_variant_id`, `quantity`, `state`, `created_at`, `deleted_at`, `product_id`, `colour_id`, `size_id`) VALUES
+INSERT INTO `product_variants` (`product_variant_id`, `quantity`, `state`, `created_at`, `deleted_at`, `product_id`, `colour_id`, `size_id`) VALUES
 (1, 12, 1, '2023-03-04 03:40:56', NULL, 1, 1, 1),
 (2, 12, 0, '2023-03-04 03:40:56', NULL, 1, 1, 2),
 (3, 12, 1, '2023-03-04 03:40:57', NULL, 1, 1, 3),
@@ -144,7 +145,7 @@ INSERT INTO `product_variant` (`product_variant_id`, `quantity`, `state`, `creat
 -- Dumping data for table `product_images`
 --
 
-INSERT INTO `Product_Image` (`image_id`, `path`, `product_variant_id`) VALUES
+INSERT INTO `Product_Images` (`image_id`, `path`, `product_variant_id`) VALUES
 (1, 'http://localhost:8080/static/images/35bd44e7-3969-4a28-9c32-077b9f85162c.jpg', 1),
 (2, 'http://localhost:8080/static/images/ee109d4c-be51-4e7e-b3f3-fdb0ecb03947.jpg', 1),
 (3, 'http://localhost:8080/static/images/9ce5f946-bd51-46e8-9d69-ada0a74a4419.jpg', 1),
@@ -216,7 +217,7 @@ INSERT INTO `Product_Image` (`image_id`, `path`, `product_variant_id`) VALUES
 -- Dumping data for table `orders`
 --
 
-INSERT INTO `Order` (`order_id`, `customer_name`, `email`, `phone_number`, `address`, `total_product_value`, `delivery_charges`, `total_order_value`, `user_id`) VALUES
+INSERT INTO `Orders` (`order_id`, `customer_name`, `email`, `phone_number`, `address`, `total_product_value`, `delivery_charges`, `total_order_value`, `user_id`) VALUES
 ('71828451735555', 'Vương Trung Tín', 'tin@gmail.com', '0932528331', '51A9 Đường Trần Nam Phú, Phường An Khánh, Quận Ninh Kiều, Thành Phố Cần Thơ', 957000, 20000, 977000, 'e1e3af7e-5ea7-4f6d-b488-0feb60d8e5c0'),
 ('71828456877430', 'Vương Trung Tín', 'tin@gmail.com', '0932528331', '51A9 Đường Trần Nam Phú, Phường An Khánh, Quận Ninh Kiều, Thành Phố Cần Thơ', 957000, 20000, 977000, 'e1e3af7e-5ea7-4f6d-b488-0feb60d8e5c0'),
 ('71828458724551', 'Nguyễn Thanh Danh', 'danh@gmail.com', '0932528331', '51A9 Đường Trần Nam Phú, Phường An Khánh, Quận Ninh Kiều, Thành Phố Cần Thơ', 778000, 20000, 798000, '8d097ddc-c9a2-4c0a-8e60-bdc7c115d519'),
@@ -230,7 +231,7 @@ INSERT INTO `Order` (`order_id`, `customer_name`, `email`, `phone_number`, `addr
 -- Dumping data for table `order_items`
 --
 
-INSERT INTO `Order_Item` (`order_id`, `product_variant_id`, `order_item_index`, `price`, `quantity`, `total_value`) VALUES
+INSERT INTO `Order_Items` (`order_id`, `product_variant_id`, `order_item_index`, `price`, `quantity`, `total_value`) VALUES
 ('71828451735555', 4, 0, 179000, 1, 179000),
 ('71828451735555', 8, 1, 179000, 1, 179000),
 ('71828451735555', 22, 2, 599000, 1, 599000),
@@ -253,7 +254,7 @@ INSERT INTO `Order_Item` (`order_id`, `product_variant_id`, `order_item_index`, 
 -- Dumping data for table `order_status_change_histories`
 --
 
-INSERT INTO `Order_Status_Change_History` (`order_id`, `state_id`, `created_at`) VALUES
+INSERT INTO `Order_Status_Change_Histories` (`order_id`, `state_id`, `created_at`) VALUES
 ('71828451735555', 1, '2023-03-25 01:43:36'),
 ('71828451735555', 2, '2023-03-25 01:49:27'),
 ('71828451735555', 3, '2023-03-25 01:49:36'),
@@ -284,7 +285,7 @@ INSERT INTO `Order_Status_Change_History` (`order_id`, `state_id`, `created_at`)
 -- Dumping data for table `feedbacks`
 --
 
-INSERT INTO `Feedback` (`feedback_id`, `rate`, `content`, `user_id`, `product_variant_id`, `created_at`, `updated_at`) VALUES
+INSERT INTO `Feedbacks` (`feedback_id`, `rate`, `content`, `user_id`, `product_variant_id`, `created_at`, `updated_at`) VALUES
 (1, 1, 'áo xấu quá!!!', 'e1e3af7e-5ea7-4f6d-b488-0feb60d8e5c0', 3, '2023-04-07 04:22:39', '2023-04-07 04:22:39'),
 (2, 2, 'áo quá rộng', 'e1e3af7e-5ea7-4f6d-b488-0feb60d8e5c0', 4, '2023-04-07 04:23:24', '2023-04-07 04:23:24'),
 (3, 5, 'áo đẹp', 'e1e3af7e-5ea7-4f6d-b488-0feb60d8e5c0', 8, '2023-04-07 04:23:46', '2023-04-07 04:23:46');

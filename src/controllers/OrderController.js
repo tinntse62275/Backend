@@ -12,25 +12,26 @@ const Order_Status_Change_History = require('../models/order_status_change_histo
 
 let create = async (req, res, next) => {
     let user_id = req.token.customer_id;
-    if (!user_id) return res.status(400).send({ message: 'Access Token không hợp lệ' });
+    if (!user_id) return res.status(400).send({ message: 'Invalid Access Token' });
 
     try {
         let user = await User.findOne({ where: { user_id, role_id: 2 } });
-        if (user == null) return res.status(400).send('User này không tồn tại');
+        if (user == null) return res.status(400).send('This user does not exist');
     } catch (err) {
         console.log(err);
-        return res.status(500).send('Gặp lỗi khi tạo đơn hàng vui lòng thử lại');
+        return res.status(500).send('An error occurred while creating the order, please try again');
     }
+
     let customer_name = req.body.customer_name;
-    if (customer_name === undefined) return res.status(400).send('Trường customer_name không tồn tại');
+    if (customer_name === undefined) return res.status(400).send('The customer_name field does not exist');
     let email = req.body.email;
-    if (email === undefined) return res.status(400).send('Trường email không tồn tại');
+    if (email === undefined) return res.status(400).send('The email field does not exist');
     let phone_number = req.body.phone_number;
-    if (phone_number === undefined) return res.status(400).send('Trường phone_number không tồn tại');
+    if (phone_number === undefined) return res.status(400).send('The phone_number field does not exist');
     let address = req.body.address;
-    if (address === undefined) return res.status(400).send('Trường address không tồn tại');
+    if (address === undefined) return res.status(400).send('The address field does not exist');
     let order_items = req.body.order_items;
-    if (order_items === undefined) return res.status(400).send('Trường order_items không tồn tại');
+    if (order_items === undefined) return res.status(400).send('The order_items field does not exist');
 
     try {
         let order_id = orderid.generate().replace(/-/g, "");
@@ -59,12 +60,14 @@ let create = async (req, res, next) => {
                 ],
                 where: { product_variant_id: order_item.product_variant_id }
             });
+
             if (product_variant == null)
-                return res.status(400).send("Sản phẩm này không tồn tại");
+                return res.status(400).send("This product does not exist");
             if (product_variant.state != true)
-                return res.status(400).send("Sản phẩm này chưa được mở bán");
+                return res.status(400).send("This product has not been launched for sale");
             if (order_item.quantity > product_variant.quantity)
-                return res.status(400).send("Số lượng sản phẩm không hợp lệ");
+                return res.status(400).send("The product quantity is not valid");
+
             let productVariantPrice = product_variant.Product.Product_Price_Histories[0].price;
             let total_value = productVariantPrice * order_item.quantity;
             let newOrderItem = {
@@ -81,17 +84,18 @@ let create = async (req, res, next) => {
             total_product_value += total_value;
         }
 
-        let delivery_charges = 20000
+        let delivery_charges = 20000;
         let total_order_value = total_product_value + delivery_charges;
         newOrder.update({ total_product_value, delivery_charges, total_order_value });
-        let state = await Order_State.findOne({ where: { state_id: 1, state_name: "Chờ Xác Nhận" } });
+        let state = await Order_State.findOne({ where: { state_id: 1, state_name: "Pending Confirmation" } });
         await newOrder.addOrder_State(state);
-        return res.send(newOrder)
+        return res.send(newOrder);
     } catch (err) {
         console.log(err);
-        return res.status(500).send('Gặp lỗi khi tạo đơn hàng vui lòng thử lại');
+        return res.status(500).send('An error occurred while creating the order, please try again');
     }
 }
+
 
 let listAdminSide = async (req, res, next) => {
     try {
@@ -108,40 +112,39 @@ let listAdminSide = async (req, res, next) => {
         });
 
         orderList = await Promise.all(orderList.map(async (order) => {
-            let stateList = await order.getOrder_States()
-            let state = stateList.pop()
+            let stateList = await order.getOrder_States();
+            let state = stateList.pop();
             let newOrder = {
                 order_id: order.order_id,
                 total_order_value: order.total_order_value,
                 state_id: state.state_id,
                 state_name: state.state_name,
                 created_at: order.Order_Status_Change_Histories[0].created_at
-            }
+            };
             return newOrder;
         }));
 
         return res.send(orderList);
     } catch (err) {
         console.log(err);
-        return res.status(500).send('Gặp lỗi khi tải dữ liệu vui lòng thử lại');
-
+        return res.status(500).send('An error occurred while loading data, please try again');
     }
 }
 
 let listCustomerSide = async (req, res, next) => {
     let customer_id = req.token.customer_id;
-    if (!customer_id) return res.status(400).send({ message: 'Access Token không hợp lệ' });
+    if (!customer_id) return res.status(400).send({ message: 'Invalid Access Token' });
 
     try {
         let customer = await User.findOne({ where: { user_id: customer_id, role_id: 2 } });
-        if (customer == null) return res.status(400).send('User này không tồn tại');
+        if (customer == null) return res.status(400).send('This user does not exist');
     } catch (err) {
         console.log(err);
-        return res.status(500).send('Gặp lỗi khi tạo đơn hàng vui lòng thử lại');
+        return res.status(500).send('An error occurred while creating the order, please try again');
     }
 
     try {
-        // Lấy tất cả đơn hàng và sắp xếp theo ngày tạo
+        // Get all orders and sort by creation date
         let orderList = await Order.findAll({
             attributes: ['order_id', 'total_order_value', 'user_id'],
             include: [
@@ -156,7 +159,7 @@ let listCustomerSide = async (req, res, next) => {
         });
 
         orderList = await Promise.all(orderList.map(async (order) => {
-            // Lấy danh sách sản phẩm của đơn hàng
+            // Get the product list of the order
             let productVariantList = await order.getProduct_variants();
             let orderItemList = [];
             for (let productVariant of productVariantList) {
@@ -170,8 +173,8 @@ let listCustomerSide = async (req, res, next) => {
                         user_id: customer_id,
                         product_variant_id: productVariant.product_variant_id
                     }
-                })
-                let hasFeedback = feedback != null
+                });
+                let hasFeedback = feedback != null;
 
                 let productVariantConverted = {
                     product_variant_id: productVariant.product_variant_id,
@@ -182,15 +185,15 @@ let listCustomerSide = async (req, res, next) => {
                     size: size.size_name,
                     price: productVariant.Order_Item.price,
                     has_feedback: hasFeedback
-                }
+                };
                 orderItemList.push(productVariantConverted);
             }
 
-            // Lấy trạng thái cuối cùng của đơn hàng
-            let stateList = await order.getOrder_States()
-            let state = stateList.pop()
+            // Get the final status of the order
+            let stateList = await order.getOrder_States();
+            let state = stateList.pop();
 
-            // Convert lại đơn hàng
+            // Convert the order
             let orderConverted = {
                 order_id: order.order_id,
                 state_id: state.state_id,
@@ -198,44 +201,44 @@ let listCustomerSide = async (req, res, next) => {
                 order_items: orderItemList,
                 total_order_value: order.total_order_value,
                 created_at: order.Order_Status_Change_Histories[0].created_at
-            }
+            };
             return orderConverted;
         }));
 
         return res.send(orderList);
     } catch (err) {
         console.log(err);
-        return res.status(500).send('Gặp lỗi khi tải dữ liệu vui lòng thử lại');
-
+        return res.status(500).send('An error occurred while loading data, please try again');
     }
 }
 
+
 let detailCustomerSide = async (req, res, next) => {
     let customer_id = req.token.customer_id;
-    if (!customer_id) return res.status(400).send({ message: 'Access Token không hợp lệ' });
+    if (!customer_id) return res.status(400).send({ message: 'Invalid Access Token' });
 
     try {
         let customer = await User.findOne({ where: { user_id: customer_id, role_id: 2 } });
-        if (customer == null) return res.status(400).send('User này không tồn tại');
+        if (customer == null) return res.status(400).send('This user does not exist');
     } catch (err) {
         console.log(err);
-        return res.status(500).send('Gặp lỗi khi tải dữ liệu vui lòng thử lại');
+        return res.status(500).send('An error occurred while loading data, please try again');
     }
 
     let order_id = req.params.order_id;
-    if (order_id === undefined) return res.status(400).send('Trường order_id không tồn tại');
+    if (order_id === undefined) return res.status(400).send('The order_id field does not exist');
     let order;
     try {
         order = await Order.findOne({ where: { order_id, user_id: customer_id } });
-        if (order == null) return res.status(400).send('Order này không tồn tại');
+        if (order == null) return res.status(400).send('This order does not exist');
     } catch (err) {
         console.log(err);
-        return res.status(500).send('Gặp lỗi khi tải dữ liệu vui lòng thử lại');
+        return res.status(500).send('An error occurred while loading data, please try again');
     }
 
-    let stateList = await order.getOrder_States()
+    let stateList = await order.getOrder_States();
     let created_at = stateList[0].Order_Status_Change_History.created_at;
-    let state = stateList.pop()
+    let state = stateList.pop();
 
     let productVariantList = await order.getProduct_variants();
     let orderItemList = [];
@@ -250,7 +253,7 @@ let detailCustomerSide = async (req, res, next) => {
             colour: colour.colour_name,
             size: size.size_name,
             total_value: productVariant.Order_Item.total_value
-        }
+        };
         orderItemList.push(productVariantConverted);
     }
 
@@ -267,28 +270,28 @@ let detailCustomerSide = async (req, res, next) => {
         email: order.email,
         phone_number: order.phone_number,
         address: order.address
-    }
+    };
 
     return res.send(orderConverted);
 }
 
 let detailAdminSide = async (req, res, next) => {
     let order_id = req.params.order_id;
-    if (order_id === undefined) return res.status(400).send('Trường order_id không tồn tại');
+    if (order_id === undefined) return res.status(400).send('The order_id field does not exist');
 
     try {
         let order = await Order.findOne({ where: { order_id } });
-        if (order == null) return res.status(400).send('Order này không tồn tại');
+        if (order == null) return res.status(400).send('This order does not exist');
 
-        let stateList = await order.getOrder_States()
+        let stateList = await order.getOrder_States();
         let orderHistories = stateList.map((state) => {
             return {
                 state_name: state.state_name,
                 created_at: state.Order_Status_Change_History.created_at
-            }
+            };
         });
-        let created_at = stateList[0].Order_Status_Change_History.created_at
-        let state = stateList.pop()
+        let created_at = stateList[0].Order_Status_Change_History.created_at;
+        let state = stateList.pop();
 
         let productVariantList = await order.getProduct_variants();
         let orderItemList = [];
@@ -303,7 +306,7 @@ let detailAdminSide = async (req, res, next) => {
                 colour: colour.colour_name,
                 size: size.size_name,
                 total_value: productVariant.Order_Item.total_value
-            }
+            };
             orderItemList.push(productVariantConverted);
         }
 
@@ -321,59 +324,59 @@ let detailAdminSide = async (req, res, next) => {
             email: order.email,
             phone_number: order.phone_number,
             address: order.address
-        }
+        };
 
         return res.send(orderConverted);
     } catch (err) {
         console.log(err);
-        return res.status(500).send('Gặp lỗi khi tải dữ liệu vui lòng thử lại');
+        return res.status(500).send('An error occurred while loading data, please try again');
     }
 }
 
 let changeStatus = async (req, res, next) => {
     let order_id = req.params.order_id;
-    if (order_id === undefined) return res.status(400).send('Trường order_id không tồn tại');
+    if (order_id === undefined) return res.status(400).send('The order_id field does not exist');
     let state_id = req.params.state_id;
-    if (state_id === undefined) return res.status(400).send('Trường state_id không tồn tại');
+    if (state_id === undefined) return res.status(400).send('The state_id field does not exist');
     let order;
     try {
         order = await Order.findOne({ where: { order_id } });
-        if (order == null) return res.status(400).send('Order này không tồn tại');
+        if (order == null) return res.status(400).send('This order does not exist');
     } catch (err) {
         console.log(err);
-        return res.status(500).send('Gặp lỗi khi tạo đơn hàng vui lòng thử lại');
+        return res.status(500).send('An error occurred while creating the order, please try again');
     }
 
     try {
-        // Xử lý chuyển đơn hàng sang trạng thái "Đã xác nhận"
+        // Handle changing order status to "Confirmed"
         if (state_id == 2) {
             let stateList = await order.getOrder_Status_Change_Histories();
             const even = (state) => state.state_id == 1;
-            // Kiểm tra xem đơn hàng có tồn tại trạng thái "Chờ xác nhận" hay không?
+            // Check if the order has the status "Pending Confirmation"
             if (stateList.some(even)) {
                 let state = await Order_State.findOne({ where: { state_id: 2 } });
                 let newState = await order.addOrder_State(state);
                 return res.send(newState);
-            } else return res.send("Đơn hàng không hợp lệ");
+            } else return res.send("Invalid order");
         }
 
-        // Xử lý chuyển đơn hàng sang trạng thái "Đang vận chuyển"
+        // Handle changing order status to "In Transit"
         if (state_id == 3) {
             let stateList = await order.getOrder_Status_Change_Histories();
             const even = (state) => state.state_id == 2;
-            // Kiểm tra xem đơn hàng có tồn tại trạng thái "Đã xác nhận" hay không?
+            // Check if the order has the status "Confirmed"
             if (stateList.some(even)) {
                 let state = await Order_State.findOne({ where: { state_id: 3 } });
                 let newState = await order.addOrder_State(state);
                 return res.send(newState);
-            } else return res.send("Đơn hàng không hợp lệ");
+            } else return res.send("Invalid order");
         }
 
-        // Xử lý chuyển đơn hàng sang trạng thái "Đã giao"
+        // Handle changing order status to "Delivered"
         if (state_id == 4) {
             let stateList = await order.getOrder_Status_Change_Histories();
             const even = (state) => state.state_id == 3;
-            // Kiểm tra xem đơn hàng có tồn tại trạng thái "Đang vận chuyển" hay không?
+            // Check if the order has the status "In Transit"
             if (stateList.some(even)) {
                 let productVariantList = await order.getProduct_variants();
                 for (let productVariant of productVariantList) {
@@ -381,48 +384,49 @@ let changeStatus = async (req, res, next) => {
                     let oldSold = product.sold;
                     let quantity = productVariant.Order_Item.quantity;
                     let newSold = oldSold + quantity;
-                    await product.update({ sold: newSold })
+                    await product.update({ sold: newSold });
                 }
                 let state = await Order_State.findOne({ where: { state_id: 4 } });
                 let newState = await order.addOrder_State(state);
                 return res.send(newState);
-            } else return res.send("Đơn hàng không hợp lệ");
+            } else return res.send("Invalid order");
         }
 
-        // Xử lý chuyển đơn hàng sang trạng thái "Đã hủy"
+        // Handle changing order status to "Canceled"
         if (state_id == 5) {
             let stateList = await order.getOrder_Status_Change_Histories();
             const even = (state) => state.state_id == 1;
             const lastIndex = stateList.length - 1;
-            // Kiểm tra xem đơn hàng có tồn tại trạng thái "Chờ xác nhận" và 
-            // không có trạng thái "Đã giao" và "Hủy bởi shop" là trạng thái cuối cùng hay không?
+            // Check if the order has the status "Pending Confirmation" and 
+            // the last status is not "Delivered" or "Canceled by Shop"
             if (stateList.some(even) && stateList[lastIndex].state_id != 4 && stateList[lastIndex].state_id != 6) {
                 let state = await Order_State.findOne({ where: { state_id: 5 } });
                 let newState = await order.addOrder_State(state);
                 return res.send(newState);
-            } else return res.send("Đơn hàng không hợp lệ");
+            } else return res.send("Invalid order");
         }
 
-        // Xử lý chuyển đơn hàng sang trạng thái "Hủy bởi shop"
+        // Handle changing order status to "Canceled by Shop"
         if (state_id == 6) {
             let stateList = await order.getOrder_Status_Change_Histories();
             const even = (state) => state.state_id == 1;
             const lastIndex = stateList.length - 1;
-            // Kiểm tra xem đơn hàng có tồn tại trạng thái "Chờ xác nhận" và 
-            // không có trạng thái "Đã giao" và "Đã hủy" là trạng thái cuối cùng hay không?
+            // Check if the order has the status "Pending Confirmation" and 
+            // the last status is not "Delivered" or "Canceled"
             if (stateList.some(even) && stateList[lastIndex].state_id != 4 && stateList[lastIndex].state_id != 5) {
                 let state = await Order_State.findOne({ where: { state_id: 6 } });
                 let newState = await order.addOrder_State(state);
                 return res.send(newState);
-            } else return res.send("Đơn hàng không hợp lệ");
+            } else return res.send("Invalid order");
         }
 
-        res.send("state_id không hợp lệ");
+        res.send("Invalid state_id");
     } catch (err) {
         console.log(err);
-        return res.status(500).send('Gặp lỗi khi tải dữ liệu vui lòng thử lại');
+        return res.status(500).send('An error occurred while loading data, please try again');
     }
 }
+
 
 module.exports = {
     create,
