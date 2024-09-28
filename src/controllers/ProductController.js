@@ -12,11 +12,11 @@ let create = async (req, res, next) => {
     let product_name = req.body.product_name;
     if (product_name === undefined) return res.status(400).send('The product_name field does not exist');
     let category_id = req.body.category_id;
-    if (category_id === undefined) return res.status(400).send('The category_id field does not exist');
+    if (category_id === undefined) return res.status(400).send(' category_id does not exist');
     let price = parseInt(req.body.price);
-    if (price === undefined) return res.status(400).send('The price field does not exist');
+    if (price === undefined) return res.status(400).send('price does not exist');
     let description = req.body.description;
-    if (description === undefined) return res.status(400).send('The description field does not exist');
+    if (description === undefined) return res.status(400).send('description does not exist');
 
     try {
         let newProduct = await Product.create({ product_name, description, category_id });
@@ -33,28 +33,28 @@ let create = async (req, res, next) => {
 
 let update = async (req, res, next) => {
     let product_id = req.body.product_id;
-    if (product_id === undefined) return res.status(400).send('The product_id field does not exist');
+    if (product_id === undefined) return res.status(400).send('product_id does not exist');
     let product_name = req.body.product_name;
     if (product_name === undefined) return res.status(400).send('The product_name field does not exist');
     let category_id = req.body.category_id;
-    if (category_id === undefined) return res.status(400).send('The category_id field does not exist');
+    if (category_id === undefined) return res.status(400).send('category_id does not exist');
     let price = parseInt(req.body.price);
-    if (price === undefined) return res.status(400).send('The price field does not exist');
+    if (price === undefined) return res.status(400).send('price does not exist');
     let description = req.body.description;
-    if (description === undefined) return res.status(400).send('The description field does not exist');
+    if (description === undefined) return res.status(400).send('description does not exist');
     try {
         let category = await Category.findOne({ where: { category_id } });
-        if (category == null) return res.status(400).send('This category does not exist');
+        if (category == null) return res.status(400).send('Category does not exist');
         let product = await Product.findOne({ where: { product_id } });
-        if (product == null) return res.status(400).send('This product does not exist');
+        if (product == null) return res.status(400).send('Product does not exist');
 
-        await Product_Price_History.create({ product_id, price });
-        await product.update({ product_name, category_id, description });
+        await Product_Price_History.create({ product_id, price })
+        await product.update({ product_name, category_id, description })
 
-        return res.send("Success");
+        return res.send("Success")
     } catch (err) {
         console.log(err);
-        return res.status(500).send('An error occurred while creating the order, please try again');
+        return res.status(500).send('Has error when create order.');
     }
 }
 
@@ -84,7 +84,7 @@ let listAdminSide = async (req, res, next) => {
             quantity: productVariant.quantity,
             state: productVariant.state,
             created_at: productVariant.created_at
-        };
+        }
         return newProductVariant;
     });
     return res.send(listProductVariant);
@@ -94,10 +94,12 @@ let listCustomerSide = async (req, res, next) => {
     let category_id = Number(req.query.category);
     let whereClause;
     if (category_id != undefined && Number.isInteger(category_id))
-        whereClause = { category_id };
+        whereClause = { category_id }
 
     try {
-        // Retrieve a list of all products, prioritizing the newest products
+
+
+        // Lấy danh sách tất cả sản phẩm ưu tiên sản phẩm mới nhất
         let listProduct = await Product.findAll({
             attributes: ['product_id'],
             order: [['created_at', 'DESC']],
@@ -106,18 +108,18 @@ let listCustomerSide = async (req, res, next) => {
 
         let listProductVariant = [];
 
-        // Iterate through the product list
+        // Duyệt qua danh sách sản phẩm
         for (let { product_id } of listProduct) {
-            // Retrieve the list of all colors for that product
+            // Lấy danh sách tất cả các màu của sản phẩm đó
             let listColor = await Product_Variant.findAll({
                 attributes: ['colour_id'],
                 where: { product_id },
                 group: ['colour_id'],
                 raw: true
             });
-            // Iterate through the color list
+            // Duyệt qua danh sách màu
             for (let { colour_id } of listColor) {
-                // Find all product variants that share the same color
+                // Tìm tất cả biến thể sản phẩm có cùng màu với nhau
                 let listProductVariantSameColour = await Product_Variant.findAll({
                     attributes: ['product_variant_id', 'colour_id'],
                     include: [
@@ -142,7 +144,7 @@ let listCustomerSide = async (req, res, next) => {
                         ]
                     },
                 });
-                // Convert data
+                // Convert dữ liệu
                 if (listProductVariantSameColour.length) {
                     let productVariant = {
                         product_id: listProductVariantSameColour[0].Product.product_id,
@@ -157,7 +159,7 @@ let listCustomerSide = async (req, res, next) => {
                         product_image: listProductVariantSameColour[0].Product_Images[0].path,
                         sizes: []
                     };
-                    // Iterate through the product variants of the same color to aggregate the sizes
+                    // Duyệt qua danh sách biến thể sản phẩm có cùng màu để cộng dồn danh sách sizes
                     for (let { Size } of listProductVariantSameColour)
                         productVariant.sizes.push(Size.size_name);
                     listProductVariant.push(productVariant);
@@ -167,13 +169,13 @@ let listCustomerSide = async (req, res, next) => {
         return res.send(listProductVariant);
     } catch (err) {
         console.log(err);
-        return res.status(500).send('An error occurred while loading data, please try again');
+        return res.status(500).send('Has error when create order');
     }
 }
 
 let detailCustomerSide = async (req, res, next) => {
     let product_id = req.params.product_id;
-    if (product_id === undefined) return res.status(400).send('The product_id field does not exist');
+    if (product_id === undefined) return res.status(400).send('product_id does not exist');
 
     try {
         let productDetail = await Product.findOne({
@@ -184,13 +186,13 @@ let detailCustomerSide = async (req, res, next) => {
         return res.send(productDetail);
     } catch (err) {
         console.log(err);
-        return res.status(500).send('An error occurred while loading data, please try again');
+        return res.status(500).send('Has error when create order');
     }
 }
 
 let detailAdminSide = async (req, res, next) => {
     let product_id = req.params.product_id;
-    if (product_id === undefined) return res.status(400).send('The product_id field does not exist');
+    if (product_id === undefined) return res.status(400).send('product_id does not exist');
 
     try {
         let productDetail = await Product.findOne({
@@ -212,7 +214,7 @@ let detailAdminSide = async (req, res, next) => {
 
         if (productDetail) {
             let productVariantList = productDetail.product_variants.map((productVariant) => {
-                let productImages = productVariant.Product_Images.map(({ path }) => { return { path } });
+                let productImages = productVariant.Product_Images.map(({ path }) => { return { path } })
                 return {
                     product_variant_id: productVariant.product_variant_id,
                     colour_id: productVariant.colour_id,
@@ -222,7 +224,7 @@ let detailAdminSide = async (req, res, next) => {
                     quantity: productVariant.quantity,
                     product_images: productImages
                 }
-            });
+            })
             productDetail = {
                 product_id: productDetail.product_id,
                 product_name: productDetail.product_name,
@@ -231,20 +233,20 @@ let detailAdminSide = async (req, res, next) => {
                 price: productDetail.Product_Price_Histories[0].price,
                 description: productDetail.description,
                 product_variant_list: productVariantList
-            };
+            }
             return res.send(productDetail);
         } else {
-            return res.status(400).send('This product variant does not exist');
+            return res.status(400).send('Has error when create order not exist');
         }
     } catch (err) {
         console.log(err);
-        return res.status(500).send('An error occurred while loading data, please try again');
+        return res.status(500).send('Has error when create order');
     }
 }
 
 let listColour = async (req, res, next) => {
     let product_id = req.params.product_id;
-    if (product_id === undefined) return res.status(400).send('The product_id field does not exist');
+    if (product_id === undefined) return res.status(400).send('product_id does not exist');
 
     try {
         let listColour = await Product_Variant.findAll({
@@ -267,15 +269,15 @@ let listColour = async (req, res, next) => {
         return res.send(listColour);
     } catch (err) {
         console.log(err);
-        return res.status(500).send('An error occurred while loading data, please try again');
+        return res.status(500).send('Has error when create order');
     }
 }
 
 let listSize = async (req, res, next) => {
     let product_id = req.params.product_id;
-    if (product_id === undefined) return res.status(400).send('The product_id field does not exist');
+    if (product_id === undefined) return res.status(400).send('product_id does not exist');
     let colour_id = req.params.colour_id;
-    if (colour_id === undefined) return res.status(400).send('The colour_id field does not exist');
+    if (colour_id === undefined) return res.status(400).send('colour_id does not exist');
 
     try {
         let listSize = await Product_Variant.findAll({
@@ -297,10 +299,9 @@ let listSize = async (req, res, next) => {
         return res.send(listSize);
     } catch (err) {
         console.log(err);
-        return res.status(500).send('An error occurred while loading data, please try again');
+        return res.status(500).send('Has error when create order');
     }
 }
-
 
 module.exports = {
     create,
