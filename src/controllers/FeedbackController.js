@@ -17,43 +17,43 @@ const Size = require('../models/size');
 
 let create = async (req, res, next) => {
     let customer_id = req.token.customer_id;
-    if (!customer_id) return res.status(400).send({ message: 'Invalid Access Token' });
+    if (!customer_id) return res.status(400).send({ message: 'Access Token không hợp lệ' });
     let product_variant_id = req.body.product_variant_id;
-    if (product_variant_id === undefined) return res.status(400).send('The product_variant_id field does not exist');
+    if (product_variant_id === undefined) return res.status(400).send('Trường product_variant_id không tồn tại');
     let rate = req.body.rate;
-    if (rate === undefined) return res.status(400).send('The rate field does not exist');
+    if (rate === undefined) return res.status(400).send('Trường rate không tồn tại');
     let content = req.body.content;
-    if (content === undefined) return res.status(400).send('The content field does not exist');
+    if (content === undefined) return res.status(400).send('Trường content không tồn tại');
 
-    // Check if the customer_id provided exists
+    // Kiểm tra xem customer_id được gửi đến có tồn tại hay không?
     try {
         let customer = await User.findOne({ where: { user_id: customer_id, role_id: 2 } });
-        if (customer == null) return res.status(400).send('This customer does not exist');
+        if (customer == null) return res.status(400).send('Customer này không tồn tại');
     } catch (err) {
         console.log(err);
-        return res.status(500).send('Error loading data, please try again');
+        return res.status(500).send('Gặp lỗi khi tải dữ liệu vui lòng thử lại');
     }
 
-    // Check if the product_variant_id provided exists
+    // Kiểm tra xem product_variant_id được gửi đến có tồn tại hay không?
     try {
         var productVariant = await Product_Variant.findOne({ where: { product_variant_id } });
-        if (productVariant == null) return res.status(400).send('This Product Variant does not exist');
+        if (productVariant == null) return res.status(400).send('Product Variant này không tồn tại');
     } catch (err) {
         console.log(err);
-        return res.status(500).send('Error loading data, please try again');
+        return res.status(500).send('Gặp lỗi khi tải dữ liệu vui lòng thử lại');
     }
 
-    // Check if feedback with customer_id and product_variant_id already exists
+    // Kiểm tra xem feedback với customer_id và product_variant_id được gửi đến đã tồn tại hay chưa?
     try {
         let feedback = await Feedback.findOne({ where: { user_id: customer_id, product_variant_id } });
-        if (feedback) return res.status(400).send('Feedback already exists');
+        if (feedback) return res.status(400).send('Feedback đã tồn tại');
     } catch (err) {
         console.log(err);
-        return res.status(500).send('Error loading data, please try again');
+        return res.status(500).send('Gặp lỗi khi tải dữ liệu vui lòng thử lại');
     }
 
     try {
-        // Check if the customer with the corresponding ID has purchased the product with the provided product_variant_id
+        // Kiểm tra xem customer có id tương ứng đã mua sản phẩn có product_variant_id đã gửi đến hay chưa?
         let order = await Order.findOne({
             attributes: ['order_id', 'total_order_value'],
             include: [
@@ -70,8 +70,8 @@ let create = async (req, res, next) => {
         if (order) {
             let feedback = await Feedback.create({ user_id: customer_id, product_variant_id, rate, content });
 
-            // Retrieve all Feedback related to the product corresponding to the newly created feedback
-            // calculate the average rate and count
+            // Lấy tất cả Feedback có product tương ứng với feedback vừa tạo
+            // tính rate trung bình và đếm số lượng
             let product = await productVariant.getProduct();
             let product_id = product.product_id;
             let [result] = await Feedback.findAll({
@@ -82,37 +82,37 @@ let create = async (req, res, next) => {
                 include: { model: Product_Variant, where: { product_id } },
             });
 
-            // Update the Rating and feedbackQuantity for the corresponding product
-            let rating = parseFloat(result.dataValues.avg);
-            let feedback_quantity = parseInt(result.dataValues.count);
-            await product.update({ rating, feedback_quantity });
+            // Cập nhật lại Rating và feedbackQuantity cho product tương ứng
+            let rating = parseFloat(result.dataValues.avg)
+            let feedback_quantity = parseInt(result.dataValues.count)
+            await product.update({ rating, feedback_quantity })
 
             return res.send(feedback);
         } else {
-            return res.status(400).send('Invalid Feedback');
+            return res.status(400).send('Feedback không hợp lệ');
         }
     } catch (err) {
         console.log(err);
-        return res.status(500).send('Error loading data, please try again');
+        return res.status(500).send('Gặp lỗi khi tải dữ liệu vui lòng thử lại');
     }
 }
 
 let update = async (req, res, next) => {
     let feedback_id = req.body.feedback_id;
-    if (feedback_id === undefined) return res.status(400).send('The feedback_id field does not exist');
+    if (feedback_id === undefined) return res.status(400).send('Trường feedback_id không tồn tại');
     let rate = req.body.rate;
-    if (rate === undefined) return res.status(400).send('The rate field does not exist');
+    if (rate === undefined) return res.status(400).send('Trường rate không tồn tại');
     let content = req.body.content;
-    if (content === undefined) return res.status(400).send('The content field does not exist');
+    if (content === undefined) return res.status(400).send('Trường content không tồn tại');
 
     try {
-        let feedback = await Feedback.findOne({ where: { feedback_id } });
-        if (!feedback) res.status(400).send('This Feedback does not exist');
+        let feedback = await Feedback.findOne({ where: { feedback_id } })
+        if (!feedback) res.status(400).send('Feedback này không tồn tại');
         else {
-            await feedback.update({ rate, content });
+            await feedback.update({ rate, content })
 
-            // Retrieve all Feedback related to the product corresponding to the feedback just updated
-            // calculate the average rate
+            // Lấy tất cả Feedback có product tương ứng với feedback vừa tạo
+            // tính rate trung bình
             let productVariant = await feedback.getProduct_variant();
             let product = await productVariant.getProduct();
             let product_id = product.product_id;
@@ -123,48 +123,48 @@ let update = async (req, res, next) => {
                 include: { model: Product_Variant, where: { product_id } },
             });
 
-            // Update the Rating for the corresponding product
-            let rating = parseFloat(result.dataValues.avg);
-            await product.update({ rating });
+            // Cập nhật lại Rating và feedbackQuantity cho product tương ứng
+            let rating = parseFloat(result.dataValues.avg)
+            await product.update({ rating })
 
-            return res.send({ message: 'Feedback updated successfully!' });
+            return res.send({ message: 'Cập nhật feedback thành công!' })
         }
     } catch (err) {
-        console.log(err);
-        return res.status(500).send('Error loading data, please try again');
+        console.log(err)
+        return res.status(500).send('Gặp lỗi khi tải dữ liệu vui lòng thử lại');
     }
 }
 
 let detail = async (req, res, next) => {
     let customer_id = req.token.customer_id;
-    if (!customer_id) return res.status(400).send({ message: 'Invalid Access Token' });
+    if (!customer_id) return res.status(400).send({ message: 'Access Token không hợp lệ' });
     let product_variant_id = req.params.product_variant_id;
-    if (product_variant_id === undefined) return res.status(400).send('The product_variant_id field does not exist');
+    if (product_variant_id === undefined) return res.status(400).send('Trường product_variant_id không tồn tại');
     try {
         let customer = await User.findOne({ where: { user_id: customer_id, role_id: 2 } });
-        if (customer == null) return res.status(400).send('This customer does not exist');
+        if (customer == null) return res.status(400).send('Customer này không tồn tại');
         let productVariant = await Product_Variant.findOne({ where: { product_variant_id } });
-        if (productVariant == null) return res.status(400).send('This Product Variant does not exist');
+        if (productVariant == null) return res.status(400).send('Product Variant này không tồn tại');
 
         let feedback = await Feedback.findOne({
             attributes: ['feedback_id', 'rate', 'content'],
             where: { user_id: customer_id, product_variant_id }
-        });
-        if (!feedback) res.status(400).send('This Feedback does not exist');
-        else return res.send(feedback);
+        })
+        if (!feedback) res.status(400).send('Feedback này không tồn tại');
+        else return res.send(feedback)
     } catch (err) {
-        console.log(err);
-        return res.status(500).send('Error loading data, please try again');
+        console.log(err)
+        return res.status(500).send('Gặp lỗi khi tải dữ liệu vui lòng thử lại');
     }
 }
 
 let list = async (req, res, next) => {
     let product_id = req.params.product_id;
-    if (product_id === undefined) return res.status(400).send('The product_id field does not exist');
+    if (product_id === undefined) return res.status(400).send('Trường product_id không tồn tại');
 
     try {
-        let product = await Product.findOne({ where: { product_id } });
-        if (product == null) return res.status(400).send('This product does not exist');
+        let product = await Product.findOne({ where: { product_id } })
+        if (product == null) return res.status(400).send('Product này không tồn tại')
 
         let feedbackList = await Feedback.findAll({
             attributes: ['rate', 'content', 'created_at'],
@@ -195,12 +195,12 @@ let list = async (req, res, next) => {
                 content: feedback.content,
                 created_at: feedback.created_at
             }
-        });
+        })
 
-        return res.send(feedbackList);
+        return res.send(feedbackList)
     } catch (err) {
-        console.log(err);
-        return res.status(500).send('Error loading data, please try again');
+        console.log(err)
+        return res.status(500).send('Gặp lỗi khi tải dữ liệu vui lòng thử lại');
     }
 }
 
@@ -209,4 +209,4 @@ module.exports = {
     update,
     detail,
     list
-};
+}

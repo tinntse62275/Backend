@@ -206,7 +206,7 @@ let listCustomerSide = async (req, res, next) => {
     } catch (err) {
         console.log(err);
         return res.status(500).send('Gặp lỗi khi tải dữ liệu vui lòng thử lại');
-
+        
     }
 }
 

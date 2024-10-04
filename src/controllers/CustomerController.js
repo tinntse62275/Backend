@@ -7,16 +7,16 @@ const Customer_Info = require('../models/customer_info');
 
 let register = async (req, res, next) => {
     let email = req.body.email;
-    if (email === undefined) return res.status(400).send({ message: 'Please enter your Email' });
+    if (email === undefined) return res.status(400).send({ message: 'Vui lòng nhập Email của bạn' });
     let password = req.body.password;
-    if (password === undefined) return res.status(400).send({ message: 'Please enter your Password' });
+    if (password === undefined) return res.status(400).send({ message: 'Vui lòng nhập Mật khẩu của bạn' });
     let customer_name = req.body.customer_name;
-    if (customer_name === undefined) return res.status(400).send({ message: 'Please enter your Full Name' });
+    if (customer_name === undefined) return res.status(400).send({ message: 'Vui lòng nhập Họ và Tên của bạn' });
     let phone_number = req.body.phone_number;
-    if (phone_number === undefined) return res.status(400).send({ message: 'Please enter your Phone Number' });
+    if (phone_number === undefined) return res.status(400).send({ message: 'Vui lòng nhập Số điện thoại của bạn' });
 
     let customer = await User.findOne({ where: { email, role_id: 2 } });
-    if (customer) return res.status(409).send({ message: 'Email already exists' });
+    if (customer) return res.status(409).send({ message: 'Email đã tồn tại' });
     else {
         try {
             let hashPassword = bcrypt.hashSync(password, 10);
@@ -49,28 +49,28 @@ let register = async (req, res, next) => {
             });
         } catch (err) {
             console.log(err);
-            return res.status(500).send({ message: 'An error occurred, please try again' });
+            return res.status(500).send({ message: 'Có lỗi xảy ra vui lòng thử lại' });
         }
     }
 }
 
 let login = async (req, res, next) => {
     let email = req.body.email;
-    if (email === undefined) return res.status(400).send({ message: 'Email or Password is incorrect' });
+    if (email === undefined) return res.status(400).send({ message: 'Email hoặc Mật khẩu không đúng' });
     let password = req.body.password;
-    if (password === undefined) return res.status(400).send({ message: 'Email or Password is incorrect' });
+    if (password === undefined) return res.status(400).send({ message: 'Email hoặc Mật khẩu không đúng' });
 
     try {
         let customer = await User.findOne({
             where: { email, role_id: 2 },
         });
         if (!customer) {
-            return res.status(401).send({ message: 'Email or Password is incorrect' });
+            return res.status(401).send({ message: 'Email hoặc Mật khẩu không đúng' });
         }
 
         let isPasswordValid = bcrypt.compareSync(password, customer.password);
         if (!isPasswordValid) {
-            return res.status(401).send({ message: 'Email or Password is incorrect' });
+            return res.status(401).send({ message: 'Email hoặc Mật khẩu không đúng' });
         }
 
         const accessToken = jwt.sign(
@@ -99,18 +99,18 @@ let login = async (req, res, next) => {
         });
     } catch (err) {
         console.log(err);
-        return res.status(400).send({ message: 'An error occurred, please try again' });
+        return res.status(400).send({ message: 'Có lỗi xảy ra, vui lòng thử lại' });
     }
 }
 
 let logout = async (req, res, next) => {
     res.clearCookie('refresh_token');
-    return res.send({ message: 'Logout successful' });
+    return res.send({ message: 'Đăng xuất thành công' });
 }
 
 let refreshAccessToken = async (req, res, next) => {
     const refreshToken = req.cookies?.refresh_token;
-    if (refreshToken === undefined) return res.status(400).send({ message: 'Refresh Token is invalid' });
+    if (refreshToken === undefined) return res.status(400).send({ message: 'Refresh Token không hợp lệ' });
     try {
         const { iat, exp, ...payload } = jwt.verify(refreshToken, process.env.REFRESHTOKEN_SECRET_KEY);
 
@@ -140,13 +140,13 @@ let refreshAccessToken = async (req, res, next) => {
         });
     } catch (error) {
         console.log(error);
-        return res.status(400).send({ message: 'Refresh Token is invalid' });
+        return res.status(400).send({ message: 'Refresh Token không hợp lệ' });
     }
 }
 
 let getInfor = async (req, res, next) => {
     const customerId = req.token.customer_id;
-    if (!customerId) return res.status(400).send({ message: 'Access Token is invalid' });
+    if (!customerId) return res.status(400).send({ message: 'Access Token không hợp lệ' });
 
     try {
         const customer = await User.findOne({
@@ -164,23 +164,23 @@ let getInfor = async (req, res, next) => {
         });
     } catch (error) {
         console.log(error);
-        return res.status(500).send({ message: 'An error occurred, please try again' });
+        return res.status(500).send({ message: 'Có lỗi xảy ra, vui lòng thử lại' });
     }
 }
 
 let update = async (req, res, next) => {
     const user_id = req.token.customer_id;
-    if (!user_id) return res.status(400).send({ message: 'Access Token is invalid' });
+    if (!user_id) return res.status(400).send({ message: 'Access Token không hợp lệ' });
     const customer_name = req.body.customer_name;
-    if (customer_name === undefined) return res.status(400).send({ message: 'customer_name field does not exist' });
+    if (customer_name === undefined) return res.status(400).send({ message: 'Trường customer_name không tồn tại' });
     const phone_number = req.body.phone_number;
-    if (phone_number === undefined) return res.status(400).send({ message: 'phone_number field does not exist' });
+    if (phone_number === undefined) return res.status(400).send({ message: 'Trường phone_number không tồn tại' });
     const address = req.body.address;
-    if (address === undefined) return res.status(400).send({ message: 'address field does not exist' });
+    if (address === undefined) return res.status(400).send({ message: 'Trường address không tồn tại' });
 
     try {
         const customer = await User.findOne({ where: { user_id, role_id: 2 } });
-        if (!customer) return res.status(409).send({ message: 'Customer does not exist' });
+        if (!customer) return res.status(409).send({ message: 'Customer không tồn tại' });
 
         const numberUpdate = await Customer_Info.update(
             { customer_name, phone_number, address },
@@ -193,11 +193,11 @@ let update = async (req, res, next) => {
                 address
             });
         } else {
-            return res.status(500).send({ message: 'An error occurred, please try again' });
+            return res.status(500).send({ message: 'Có lỗi xảy ra, vui lòng thử lại' });
         }
     } catch (err) {
         console.log(err);
-        return res.status(500).send({ message: 'An error occurred, please try again' });
+        return res.status(500).send({ message: 'Có lỗi xảy ra, vui lòng thử lại' });
     }
 }
 
