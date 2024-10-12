@@ -7,6 +7,7 @@ const Category = sequelize.define('Category', {
     title: DataTypes.STRING,
     level: { type: DataTypes.INTEGER, defaultValue: 1 },
     parent_id: { type: DataTypes.INTEGER, defaultValue: null },
+    state: { type: DataTypes.BOOLEAN, defaultValue: true },
 }, {
     timestamps : false
 })

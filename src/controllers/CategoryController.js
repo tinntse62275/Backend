@@ -39,7 +39,7 @@ let createLevel2 = async (req, res, next) => {
 let nestList = async (req, res, next) => {
     try {
         let listCategoryLevel1 = await Category.findAll({
-            where: { parent_id: null },
+            where: { parent_id: null, state: 1 },  // Thêm điều kiện state = 1
             attributes: ['category_id', 'title'],
             raw: true
         });
@@ -47,7 +47,7 @@ let nestList = async (req, res, next) => {
         let listCategory = [];
         for (let { category_id, title } of listCategoryLevel1) {
             let listCategoryLevel2 = await Category.findAll({
-                where: { parent_id: category_id },
+                where: { parent_id: category_id, state: 1 },  // Thêm điều kiện state = 1
                 attributes: ['category_id', 'title'],
                 raw: true
             });
@@ -57,14 +57,14 @@ let nestList = async (req, res, next) => {
 
         res.send(listCategory);
     } catch (err) {
-        console.log(err)
+        console.log(err);
         return res.status(500).send('Gặp lỗi khi tải dữ liệu vui lòng thử lại');
     }
-}
+};
 
 let list = async (req, res, next) => {
     try {
-        let categoryList = await Category.findAll({ raw: true, order: [['level', 'ASC'],] })
+        let categoryList = await Category.findAll({ raw: true, order: [['level', 'ASC'],]})
         categoryList = await Promise.all(categoryList.map(async (category) => {
             let parent
             if (category.parent_id != null) {
@@ -73,7 +73,8 @@ let list = async (req, res, next) => {
                     category_id: category.category_id,
                     title: category.title,
                     level: category.level,
-                    parent: parent.title
+                    parent: parent.title,
+                    state: category.state
                 }
             }
             else {
@@ -81,7 +82,8 @@ let list = async (req, res, next) => {
                     category_id: category.category_id,
                     title: category.title,
                     level: category.level,
-                    parent: null
+                    parent: null,
+                    state: category.state
                 }
             }
         }))
@@ -105,11 +107,42 @@ let listLevel1 = async (req, res, next) => {
         return res.status(500).send('Gặp lỗi khi tải dữ liệu vui lòng thử lại');
     }
 }
+let onState = async (req, res, next) => {
+    try {
+        let category_ids = req.body.category_ids;
+        if (category_ids === undefined) return res.status(400).send('Trường category_id không tồn tại');
+        await Category.update(
+            { state: true },
+            { where: { category_id: category_ids } }
+        )
+        return res.send({ message: 'Mở bán biến thể sản phẩm thành công!' })
+    } catch (err) {
+        console.log(err)
+        return res.status(500).send('Gặp lỗi khi tải dữ liệu vui lòng thử lại');
+    }
+}
+
+let offState = async (req, res, next) => {
+    try {
+        let category_ids = req.body.category_ids;
+        if (category_ids === undefined) return res.status(400).send('Trường category_id không tồn tại');
+        Category.update(
+            { state: false },
+            { where: { category_id: category_ids } }
+        )
+        return res.send({ message: 'Tắt biến thể sản phẩm thành công!' })
+    } catch (err) {
+        console.log(err)
+        return res.status(500).send('Gặp lỗi khi tải dữ liệu vui lòng thử lại');
+    }
+}
 
 module.exports = {
     createLevel1,
     createLevel2,
     nestList,
     list,
-    listLevel1
+    listLevel1,
+    onState,
+    offState,
 };

@@ -14,4 +14,8 @@ router.get('/list', CategoryController.list);
 
 router.get('/list-level1', CategoryController.listLevel1);
 
+router.put('/on', CategoryController.onState);
+
+router.put('/off', CategoryController.offState);
+
 module.exports = router;
