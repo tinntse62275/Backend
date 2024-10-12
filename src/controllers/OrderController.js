@@ -31,7 +31,8 @@ let create = async (req, res, next) => {
     if (address === undefined) return res.status(400).send('Trường address không tồn tại');
     let order_items = req.body.order_items;
     if (order_items === undefined) return res.status(400).send('Trường order_items không tồn tại');
-
+    let payment_method = req.body.payment_method;
+    if (payment_method === undefined) return res.status(400).send('Trường paymentMethod không tồn tại');
     try {
         let order_id = orderid.generate().replace(/-/g, "");
         var newOrder = await Order.create({
@@ -44,6 +45,7 @@ let create = async (req, res, next) => {
             total_product_value: 0,
             delivery_charges: 0,
             total_order_value: 0,
+            payment_method,
         });
 
         let total_product_value = 0;

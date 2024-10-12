@@ -1,9 +1,15 @@
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const { jwtDecode } = require('jwt-decode');
-
+const { OAuth2Client } = require('google-auth-library');
 const User = require('../models/user');
 const Customer_Info = require('../models/customer_info');
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+const nodemailer = require('nodemailer');
+const crypto = require('crypto');
+
+// Hàm tạo mã OTP (6 chữ số)
+
 
 let register = async (req, res, next) => {
     let email = req.body.email;
@@ -201,11 +207,164 @@ let update = async (req, res, next) => {
     }
 }
 
+const googleLogin = async (req, res, next) => {
+    const { email, password, username, phone } = req.body;
+    try {
+        // Kiểm tra xem email đã tồn tại trong database chưa
+        let customer = await User.findOne({ where: { email, role_id: 2 } });
+
+        if (!customer) {
+            // Nếu chưa tồn tại, thêm mới người dùng
+            let hashPassword = bcrypt.hashSync(password, 10);
+            customer = await User.create({ email: email, password: hashPassword, role_id: 2 });
+            console.log(customer)
+            await Customer_Info.create({ user_id: customer.dataValues.user_id, customer_name: username });
+        }
+
+        // Tạo JWT cho người dùng
+        const accessToken = jwt.sign(
+            { customer_id: customer.user_id },
+            process.env.ACCESSTOKEN_SECRET_KEY,
+            { expiresIn: process.env.ACCESSTOKEN_EXPIRES_IN }
+        );
+
+        const { exp } = jwt.decode(accessToken);
+        const accessTokenExpires = exp;
+
+        const refreshToken = jwt.sign(
+            { customer_id: customer.user_id },
+            process.env.REFRESHTOKEN_SECRET_KEY,
+            { expiresIn: process.env.REFRESHTOKEN_EXPIRES_IN }
+        );
+
+        // Thiết lập cookie refresh token
+        res.cookie('refresh_token', refreshToken, {
+            httpOnly: true,
+            path: '/',
+            sameSite: 'strict',
+        });
+
+        // Trả về token và thông tin cần thiết
+        return res.send({
+            access_token: accessToken,
+            access_token_expires: accessTokenExpires,
+        });
+
+    } catch (err) {
+        console.error("Error logging in with Google:", err);
+        return res.status(500).send({ message: 'Có lỗi xảy ra, vui lòng thử lại' });
+    }
+};
+
+const otpStorage = {};
+
+// Lưu OTP
+const saveOtp = (email, otp) => {
+    const expiresAt = Date.now() + 5 * 60 * 1000; // Hết hạn sau 5 phút
+    otpStorage[email] = { otp, expiresAt };
+};
+
+// Kiểm tra OTP
+const verifyOtp = (email, otp) => {
+    const entry = otpStorage[email];
+    if (!entry) return false; // Không tìm thấy OTP
+
+    if (entry.otp !== otp) return false; // OTP không đúng
+    if (Date.now() > entry.expiresAt) return false; // OTP đã hết hạn
+
+    // Xóa OTP sau khi xác thực thành công
+    delete otpStorage[email];
+    return true; // Xác thực thành công
+};
+
+const forgotPassword = async (req, res, next) => {
+    const { email } = req.body;
+
+    try {
+        let user = await User.findOne({ where: { email, role_id: 2 } });
+        if (!user) return res.status(404).json({ message: 'Email không tồn tại' });
+
+        // Tạo OTP ngẫu nhiên (gồm 6 chữ số)
+        const otp = crypto.randomInt(100000, 999999).toString();
+
+        // Lưu OTP vào bộ nhớ tạm thời
+        saveOtp(email, otp);
+
+        // Cấu hình và gửi email
+        const transporter = nodemailer.createTransport({
+            service: 'gmail',
+            auth: {
+                user: process.env.EMAIL_USER,
+                pass: process.env.EMAIL_PASS
+            }
+        });
+
+        const mailOptions = {
+            from: process.env.EMAIL_USER,
+            to: email,
+            subject: 'OTP Quên Mật Khẩu',
+            text: `Mã OTP của bạn là: ${otp}. Mã này sẽ hết hạn trong 5 phút.`
+        };
+
+        await transporter.sendMail(mailOptions);
+
+        return res.status(200).json({ message: 'OTP đã được gửi tới email của bạn' });
+    } catch (err) {
+        console.error(err);
+        return res.status(500).json({ message: 'Có lỗi xảy ra, vui lòng thử lại sau' });
+    }
+};
+
+const verifyOtpController = async (req, res, next) => {
+    const { email, otp } = req.body;
+
+    try {
+        const isValid = verifyOtp(email, otp);
+        if (!isValid) return res.status(400).json({ message: 'OTP không hợp lệ hoặc đã hết hạn' });
+
+        return res.status(200).json({ message: 'OTP xác thực thành công' });
+    } catch (err) {
+        console.error(err);
+        return res.status(500).json({ message: 'Có lỗi xảy ra, vui lòng thử lại sau' });
+    }
+};
+
+const resetPassword = async (req, res, next) => {
+    const { email, newPassword } = req.body;
+
+    // Kiểm tra đầu vào
+    if (!newPassword || newPassword.length < 6) {
+        return res.status(400).json({ message: 'Mật khẩu mới phải có ít nhất 6 ký tự' });
+    }
+
+    try {
+        // Tìm user trong DB
+        const user = await User.findOne({ where: { email } });
+        if (!user) return res.status(404).json({ message: 'Email không tồn tại' });
+
+        // Mã hóa mật khẩu mới
+        const hashPassword = bcrypt.hashSync(newPassword, 10);
+
+        // Cập nhật mật khẩu mới cho user
+        user.password = hashPassword;
+        await user.save();
+
+        return res.status(200).json({ message: 'Đổi mật khẩu thành công' });
+    } catch (err) {
+        console.error(err);
+        return res.status(500).json({ message: 'Có lỗi xảy ra, vui lòng thử lại sau' });
+    }
+};
+
 module.exports = {
     register,
     login,
     logout,
     refreshAccessToken,
     getInfor,
-    update
+    update,
+    googleLogin,
+    forgotPassword,
+    verifyOtpController,
+    resetPassword,
 };

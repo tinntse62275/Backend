@@ -17,4 +17,13 @@ router.get('/infor', jwtAuth, CustomerController.getInfor);
 
 router.put('/update', jwtAuth, CustomerController.update);
 
+router.post('/googleLogin', CustomerController.googleLogin);
+
+
+router.post('/forgotpass', CustomerController.forgotPassword);
+
+router.post('/verifyOtp', CustomerController.verifyOtpController);
+
+router.post('/resetPassword', CustomerController.resetPassword);
+
 module.exports = router;
