@@ -13,7 +13,6 @@ const Order_Status_Change_History = require('../models/order_status_change_histo
 let create = async (req, res, next) => {
     let user_id = req.token.customer_id;
     if (!user_id) return res.status(400).send({ message: 'Access Token không hợp lệ' });
-
     try {
         let user = await User.findOne({ where: { user_id, role_id: 2 } });
         if (user == null) return res.status(400).send('User này không tồn tại');
@@ -33,6 +32,8 @@ let create = async (req, res, next) => {
     if (order_items === undefined) return res.status(400).send('Trường order_items không tồn tại');
     let payment_method = req.body.payment_method;
     if (payment_method === undefined) return res.status(400).send('Trường paymentMethod không tồn tại');
+    let statusPayment = req.body.statusPayment; // Thông tin đã thanh toán hay chưa Process, Done
+    if (statusPayment === undefined) statusPayment == 'Process'
     try {
         let order_id = orderid.generate().replace(/-/g, "");
         var newOrder = await Order.create({
@@ -45,7 +46,8 @@ let create = async (req, res, next) => {
             total_product_value: 0,
             delivery_charges: 0,
             total_order_value: 0,
-            payment_method,
+            methodPayment: payment_method,
+            statusPayment: statusPayment,
         });
 
         let total_product_value = 0;
@@ -268,7 +270,8 @@ let detailCustomerSide = async (req, res, next) => {
         customer_name: order.customer_name,
         email: order.email,
         phone_number: order.phone_number,
-        address: order.address
+        address: order.address,
+        methodPayment: order.methodPayment,
     }
 
     return res.send(orderConverted);
