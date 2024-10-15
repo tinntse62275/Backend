@@ -17,4 +17,8 @@ router.get('/admin/detail/:order_id', OrderController.detailAdminSide);
 
 router.put('/change-status/:order_id/:state_id', OrderController.changeStatus);
 
+router.get('/totalPrice', OrderController.totalPrice);
+
+router.get('/totalOrder', OrderController.totalOrder);
+
 module.exports = router;

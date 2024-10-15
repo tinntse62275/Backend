@@ -19,5 +19,7 @@ router.get('/admin/detail/:product_id', ProductController.detailAdminSide);
 router.get('/customer/list-colour/:product_id', ProductController.listColour);
 
 router.get('/customer/list-size/:product_id/:colour_id', ProductController.listSize);
+router.get('/totalProduct', ProductController.totalProduct);
+
 
 module.exports = router;

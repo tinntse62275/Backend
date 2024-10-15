@@ -302,6 +302,23 @@ let listSize = async (req, res, next) => {
         return res.status(500).send('Gặp lỗi khi tải dữ liệu vui lòng thử lại');
     }
 }
+let totalProduct = async (req, res, next) => {
+    try {
+        // Lấy tất cả các sản phẩm variant
+        let productVariants = await Product_Variant.findAll({
+            attributes: ['quantity'] // Chỉ cần lấy thuộc tính quantity
+        });
+
+        // Tính tổng quantity
+        let totalProducts = productVariants.reduce((total, variant) => total + variant.quantity, 0);
+
+        // Trả về kết quả
+        return res.send({ totalProducts });
+    } catch (error) {
+        console.error('Error calculating total products:', error);
+        return res.status(500).send({ error: 'Có lỗi xảy ra khi tính tổng số sản phẩm.' });
+    }
+}
 
 module.exports = {
     create,
@@ -311,5 +328,6 @@ module.exports = {
     detailCustomerSide,
     detailAdminSide,
     listColour,
-    listSize
+    listSize,
+    totalProduct
 };

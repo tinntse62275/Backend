@@ -1,6 +1,4 @@
 const orderid = require('order-id')('key');
-
-const Order = require('../models/order');
 const User = require('../models/user');
 const Order_State = require('../models/order_state');
 const Product_Variant = require('../models/product_variant');
@@ -9,6 +7,7 @@ const Product_Price_History = require('../models/product_price_history');
 const Order_Item = require('../models/order_item');
 const Feedback = require('../models/feedback');
 const Order_Status_Change_History = require('../models/order_status_change_history');
+const Order = require('../models/order');
 
 let create = async (req, res, next) => {
     let user_id = req.token.customer_id;
@@ -428,6 +427,39 @@ let changeStatus = async (req, res, next) => {
         return res.status(500).send('Gặp lỗi khi tải dữ liệu vui lòng thử lại');
     }
 }
+let totalOrder = async (req, res, next) => {
+    try {
+        // Đếm số lượng order_id trong bảng Orders
+        const totalOrderCount = await Order.count({
+            distinct: true, // Đếm các giá trị duy nhất nếu cần
+            col: 'order_id' // Cột để đếm
+        });
+
+        // Trả về kết quả
+        return res.send({ totalOrder: totalOrderCount });
+    } catch (error) {
+        console.error('Error calculating total orders:', error);
+        return res.status(500).send({ error: 'Có lỗi xảy ra khi tính tổng số đơn hàng.' });
+    }
+};
+let totalPrice = async (req, res, next) => {
+    try {
+        // Lấy tất cả các sản phẩm variant
+        let Orders = await Order.findAll({
+            attributes: ['total_order_value'] // Chỉ cần lấy thuộc tính quantity
+        });
+
+        // Tính tổng quantity
+        let totalPrice = Orders.reduce((total, order_ss) => total + order_ss.total_order_value, 0);
+
+        // Trả về kết quả
+        return res.send({ totalPrice });
+    } catch (error) {
+        console.error('Error calculating total products:', error);
+        return res.status(500).send({ error: 'Có lỗi xảy ra khi tính tổng số sản phẩm.' });
+    }
+};
+
 
 module.exports = {
     create,
@@ -435,5 +467,7 @@ module.exports = {
     listCustomerSide,
     detailCustomerSide,
     detailAdminSide,
-    changeStatus
+    changeStatus,
+    totalPrice,
+    totalOrder
 }

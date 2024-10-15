@@ -355,7 +355,20 @@ const resetPassword = async (req, res, next) => {
         return res.status(500).json({ message: 'Có lỗi xảy ra, vui lòng thử lại sau' });
     }
 };
+let totalUser = async (req, res, next) => {
+    try {
+        // Đếm số lượng User với role_id = 1
+        const totalUserCount = await User.count({
+            where: { role_id: 2 } // Điều kiện để đếm
+        });
 
+        // Trả về kết quả
+        return res.send({ totalUser: totalUserCount });
+    } catch (error) {
+        console.error('Error calculating total users:', error);
+        return res.status(500).send({ error: 'Có lỗi xảy ra khi tính tổng số người dùng.' });
+    }
+};
 module.exports = {
     register,
     login,
@@ -367,4 +380,5 @@ module.exports = {
     forgotPassword,
     verifyOtpController,
     resetPassword,
+    totalUser
 };
