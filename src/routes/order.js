@@ -21,4 +21,9 @@ router.get('/totalPrice', OrderController.totalPrice);
 
 router.get('/totalOrder', OrderController.totalOrder);
 
+router.get('/totalOrderPerDay', OrderController.totalOrderPerDay);
+
+router.get('/totalRevenuePerDay', OrderController.totalRevenuePerDay);
+
+
 module.exports = router;

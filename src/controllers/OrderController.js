@@ -459,6 +459,57 @@ let totalPrice = async (req, res, next) => {
         return res.status(500).send({ error: 'Có lỗi xảy ra khi tính tổng số sản phẩm.' });
     }
 };
+let totalOrderPerDay = async (req, res, next) => {
+    try {
+        let orderHistory = await Order_Status_Change_History.findAll({
+            attributes: ['order_id', 'created_At'] 
+        });
+        let ordersPerDay = {};
+        orderHistory.forEach(order => {
+            let date = new Date(order.dataValues.created_At).toISOString().split('T')[0]; 
+            if (!ordersPerDay[date]) {
+                ordersPerDay[date] = new Set();
+            }
+            ordersPerDay[date].add(order.order_id);
+        });
+        let totalOrdersPerDay = {};
+        for (let date in ordersPerDay) {
+            totalOrdersPerDay[date] = ordersPerDay[date].size;
+        }
+        return res.send({ totalOrdersPerDay });
+    } catch (error) {
+        console.error('Error calculating total orders per day:', error);
+        return res.status(500).send({ error: 'Có lỗi xảy ra khi tính tổng số đơn hàng theo từng ngày.' });
+    }
+};
+let totalRevenuePerDay = async (req, res, next) => {
+    try {
+        let orderHistory = await Order_Status_Change_History.findAll({
+            attributes: ['order_id', 'created_At']
+        });
+
+        let revenuePerDay = {};
+        for (let order of orderHistory) {
+            let date = new Date(order.dataValues.created_At).toISOString().split('T')[0];
+
+            let relatedOrder = await Order.findOne({
+                where: { order_id: order.order_id },
+                attributes: ['total_order_value']
+            });
+
+            if (relatedOrder) {
+                if (!revenuePerDay[date]) {
+                    revenuePerDay[date] = 0;
+                }
+                revenuePerDay[date] += parseFloat(relatedOrder.total_order_value || 0); 
+            }
+        }
+        return res.send({ totalRevenuePerDay: revenuePerDay });
+    } catch (error) {
+        console.error('Error calculating total revenue per day:', error);
+        return res.status(500).send({ error: 'Có lỗi xảy ra khi tính tổng doanh thu theo từng ngày.' });
+    }
+};
 
 
 module.exports = {
@@ -469,5 +520,7 @@ module.exports = {
     detailAdminSide,
     changeStatus,
     totalPrice,
-    totalOrder
+    totalOrder,
+    totalOrderPerDay,
+    totalRevenuePerDay
 }
