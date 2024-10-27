@@ -173,6 +173,81 @@ let listCustomerSide = async (req, res, next) => {
     }
 }
 
+let listCustomerSearch = async (req, res, next) => {
+    let product_name = req.params.product_name || ''; 
+    let whereClause = {};
+    if (product_name) {
+        whereClause.product_name = { [Op.like]: `%${product_name}%` };
+    }
+    try {
+        let listProduct = await Product.findAll({
+            attributes: ['product_id'],
+            order: [['created_at', 'DESC']],
+            raw: true
+        });
+        let listProductVariant = [];
+        for (let { product_id } of listProduct) {
+            let listColor = await Product_Variant.findAll({
+                attributes: ['colour_id'],
+                where: { product_id },
+                group: ['colour_id'],
+                raw: true
+            });
+            for (let { colour_id } of listColor) {
+                let listProductVariantSameColour = await Product_Variant.findAll({
+                    attributes: ['product_variant_id', 'colour_id'],
+                    include: [
+                        {
+                            model: Product,
+                            attributes: ['product_id', 'product_name', 'rating', 'sold', 'feedback_quantity'],
+                            include: {
+                                model: Product_Price_History,
+                                attributes: ['price'],
+                                separate: true,
+                                order: [['created_at', 'DESC']]
+                            },
+                            where: whereClause
+                        },
+                        { model: Colour, attributes: ['colour_name'] },
+                        { model: Size, attributes: ['size_name'] },
+                        { model: Product_Image, attributes: ['path'] },
+                    ],
+                    where: {
+                        [Op.and]: [
+                            { colour_id },
+                            { state: true },
+                            { quantity: { [Op.gt]: 0 } }
+                        ]
+                    }
+                });
+                if (listProductVariantSameColour.length) {
+                    let productVariant = {
+                        product_id: listProductVariantSameColour[0].Product.product_id,
+                        product_name: listProductVariantSameColour[0].Product.product_name,
+                        rating: listProductVariantSameColour[0].Product.rating,
+                        sold: listProductVariantSameColour[0].Product.sold,
+                        feedback_quantity: listProductVariantSameColour[0].Product.feedback_quantity,
+                        product_variant_id: listProductVariantSameColour[0].product_variant_id,
+                        colour_id: listProductVariantSameColour[0].colour_id,
+                        colour_name: listProductVariantSameColour[0].Colour.colour_name,
+                        price: listProductVariantSameColour[0].Product.Product_Price_Histories[0].price,
+                        product_image: listProductVariantSameColour[0].Product_Images[0].path,
+                        sizes: []
+                    };
+                    for (let { Size } of listProductVariantSameColour) {
+                        productVariant.sizes.push(Size.size_name);
+                    }
+                    listProductVariant.push(productVariant);
+                }
+            }
+        }
+        return res.send(listProductVariant);
+    } catch (err) {
+        console.log(err);
+        return res.status(500).send('Gặp lỗi khi tải dữ liệu vui lòng thử lại');
+    }
+}
+
 let detailCustomerSide = async (req, res, next) => {
     let product_id = req.params.product_id;
     if (product_id === undefined) return res.status(400).send('Trường product_id không tồn tại');
@@ -329,5 +404,6 @@ module.exports = {
     detailAdminSide,
     listColour,
     listSize,
-    totalProduct
+    totalProduct,
+    listCustomerSearch
 };

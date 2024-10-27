@@ -13,7 +13,8 @@ const Order = sequelize.define('Order', {
     delivery_charges: { type: DataTypes.INTEGER, allowNull: false },
     total_order_value: { type: DataTypes.INTEGER, allowNull: false },
     methodPayment: { type: DataTypes.STRING, allowNull: true },
-    statusPayment: { type: DataTypes.STRING, allowNull: true }
+    statusPayment: { type: DataTypes.STRING, allowNull: true },
+    shipping: { type: DataTypes.STRING, allowNull: true }
 }, {
     timestamps: false,
 });

@@ -8,6 +8,8 @@ const Customer_Info = sequelize.define('Customer_Info', {
   customer_name: { type: DataTypes.STRING, defaultValue: '' },
   phone_number: { type: DataTypes.STRING, defaultValue: '' },
   address: { type: DataTypes.STRING, defaultValue: '' },
+  description: { type: DataTypes.STRING, defaultValue: '' },
+  point: { type: DataTypes.FLOAT, defaultValue: 0 }
 }, {
   timestamps: false,
 })

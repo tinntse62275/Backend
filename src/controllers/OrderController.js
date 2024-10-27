@@ -8,6 +8,9 @@ const Order_Item = require('../models/order_item');
 const Feedback = require('../models/feedback');
 const Order_Status_Change_History = require('../models/order_status_change_history');
 const Order = require('../models/order');
+const Codediscount = require('../models/codediscount');
+const Notification = require('../models/notification');
+const Customer_Info = require('../models/customer_info');
 
 let create = async (req, res, next) => {
     let user_id = req.token.customer_id;
@@ -33,6 +36,10 @@ let create = async (req, res, next) => {
     if (payment_method === undefined) return res.status(400).send('Trường paymentMethod không tồn tại');
     let statusPayment = req.body.statusPayment; // Thông tin đã thanh toán hay chưa Process, Done
     if (statusPayment === undefined) statusPayment == 'Process'
+    let shipping = req.body.shipping;
+    if (shipping === undefined) shipping == 'J&T expreess'
+    let delivery_charges = req.body.delivery_charges;
+    if (delivery_charges === undefined) delivery_charges == 20000
     try {
         let order_id = orderid.generate().replace(/-/g, "");
         var newOrder = await Order.create({
@@ -47,6 +54,7 @@ let create = async (req, res, next) => {
             total_order_value: 0,
             methodPayment: payment_method,
             statusPayment: statusPayment,
+            shipping
         });
 
         let total_product_value = 0;
@@ -83,12 +91,30 @@ let create = async (req, res, next) => {
             product_variant.update({ quantity: newProductVariantQuantity });
             total_product_value += total_value;
         }
-
-        let delivery_charges = 20000
         let total_order_value = total_product_value + delivery_charges;
         newOrder.update({ total_product_value, delivery_charges, total_order_value });
         let state = await Order_State.findOne({ where: { state_id: 1, state_name: "Chờ Xác Nhận" } });
         await newOrder.addOrder_State(state);
+        if(statusPayment == 'Process'){
+            Notification.create({
+                user_id,
+                content: 'Đặt hàng thành công đơn hàng #'+order_id
+            });
+        }else{
+            Notification.create({
+                user_id,
+                content: 'Đã thanh toán thành công đơn hàng #'+order_id
+            });
+            const customer = await Customer_Info.findOne({ where: { user_id } });
+            if (customer){
+                const currentPoints = parseFloat(customer.point) || 0; 
+                const updatedPoints = currentPoints + total_order_value * 0.01;
+                await Customer_Info.update(
+                    { point: updatedPoints },
+                    { where: { user_id } }
+                )
+            }
+        }
         return res.send(newOrder)
     } catch (err) {
         console.log(err);
@@ -213,6 +239,34 @@ let listCustomerSide = async (req, res, next) => {
     }
 }
 
+let listNotification = async (req, res, next) => {
+    let customer_id = req.token.customer_id;
+    if (!customer_id) return res.status(400).send({ message: 'Access Token không hợp lệ' });
+
+    try {
+        let customer = await User.findOne({ where: { user_id: customer_id, role_id: 2 } });
+        if (customer == null) return res.status(400).send('User này không tồn tại');
+    } catch (err) {
+        console.log(err);
+        return res.status(500).send('Gặp lỗi khi tạo đơn hàng vui lòng thử lại');
+    }
+    try {
+        let notificationList = await Notification.findAll({
+            attributes: [ 'user_id', 'content','created_at'],
+            where: { user_id: customer_id },
+            order: [
+                ['created_at', 'DESC']
+            ]
+        });
+        return res.send(notificationList);
+    } catch (err) {
+        console.log(err);
+        return res.status(500).send('Gặp lỗi khi tải dữ liệu vui lòng thử lại');
+        
+    }
+}
+
+
 let detailCustomerSide = async (req, res, next) => {
     let customer_id = req.token.customer_id;
     if (!customer_id) return res.status(400).send({ message: 'Access Token không hợp lệ' });
@@ -271,10 +325,39 @@ let detailCustomerSide = async (req, res, next) => {
         phone_number: order.phone_number,
         address: order.address,
         methodPayment: order.methodPayment,
+        shipping: order.shipping,
     }
 
     return res.send(orderConverted);
 }
+
+
+let checkDiscount = async (req, res, next) => {
+    // let customer_id = req.token.customer_id;
+    // if (!customer_id) return res.status(400).send({ message: 'Access Token không hợp lệ' });
+
+    // try {
+    //     let customer = await User.findOne({ where: { user_id: customer_id, role_id: 2 } });
+    //     if (customer == null) return res.status(400).send('User này không tồn tại');
+    // } catch (err) {
+    //     console.log(err);
+    //     return res.status(500).send('Gặp lỗi khi tải dữ liệu vui lòng thử lại');
+    // }
+
+    let code = req.params.code;
+    if (code === undefined) return res.status(200).send({ status: 0, message: 'Trường code không tồn tại' });
+    let discount;
+    try {
+        discount = await Codediscount.findOne({ where: { code, status: 0 } });
+        if (discount == null) return res.status(200).send({ status: 0, message: 'Mã giảm giá này không tồn tại' });
+        discount.update({ status: 1 });
+        return res.status(200).send({ status: 1, money:discount.money, message: 'Áp mã thành công' });
+    } catch (err) {
+        console.log(err);
+        return res.status(400).send('Mã giảm giá không tồn tại');
+    }
+}
+
 
 let detailAdminSide = async (req, res, next) => {
     let order_id = req.params.order_id;
@@ -320,6 +403,8 @@ let detailAdminSide = async (req, res, next) => {
             total_product_value: order.total_product_value,
             delivery_charges: order.delivery_charges,
             total_order_value: order.total_order_value,
+            methodpayment: order.methodPayment,
+            shipping: order.shipping,
             order_histories: orderHistories,
             customer_name: order.customer_name,
             email: order.email,
@@ -357,6 +442,20 @@ let changeStatus = async (req, res, next) => {
             if (stateList.some(even)) {
                 let state = await Order_State.findOne({ where: { state_id: 2 } });
                 let newState = await order.addOrder_State(state);
+                // Update thông báo
+                Notification.create({
+                    user_id: order.user_id,
+                    content: 'Đã xác nhận thanh tóan đơn hàng #'+order_id
+                });
+                const customer = await Customer_Info.findOne({ where: { user_id: order.user_id } });
+                if (customer){
+                    const currentPoints = parseFloat(customer.point) || 0; 
+                    const updatedPoints = currentPoints + order.total_order_value * 0.01;
+                    await Customer_Info.update(
+                        { point: updatedPoints },
+                        { where: { user_id: order.user_id } }
+                    )
+                }
                 return res.send(newState);
             } else return res.send("Đơn hàng không hợp lệ");
         }
@@ -369,6 +468,11 @@ let changeStatus = async (req, res, next) => {
             if (stateList.some(even)) {
                 let state = await Order_State.findOne({ where: { state_id: 3 } });
                 let newState = await order.addOrder_State(state);
+                // Update thông báo
+                Notification.create({
+                    user_id: order.user_id,
+                    content: 'Đang vận chuyển đơn hàng #'+order_id
+                });
                 return res.send(newState);
             } else return res.send("Đơn hàng không hợp lệ");
         }
@@ -389,6 +493,11 @@ let changeStatus = async (req, res, next) => {
                 }
                 let state = await Order_State.findOne({ where: { state_id: 4 } });
                 let newState = await order.addOrder_State(state);
+                // Update thông báo
+                Notification.create({
+                    user_id: order.user_id,
+                    content: 'Giao hàng thành công đơn hàng #'+order_id
+                });
                 return res.send(newState);
             } else return res.send("Đơn hàng không hợp lệ");
         }
@@ -403,6 +512,11 @@ let changeStatus = async (req, res, next) => {
             if (stateList.some(even) && stateList[lastIndex].state_id != 4 && stateList[lastIndex].state_id != 6) {
                 let state = await Order_State.findOne({ where: { state_id: 5 } });
                 let newState = await order.addOrder_State(state);
+                // Update thông báo
+                Notification.create({
+                    user_id: order.user_id,
+                    content: 'Hủy đơn hàng #'+order_id
+                });
                 return res.send(newState);
             } else return res.send("Đơn hàng không hợp lệ");
         }
@@ -417,6 +531,11 @@ let changeStatus = async (req, res, next) => {
             if (stateList.some(even) && stateList[lastIndex].state_id != 4 && stateList[lastIndex].state_id != 5) {
                 let state = await Order_State.findOne({ where: { state_id: 6 } });
                 let newState = await order.addOrder_State(state);
+                // Update thông báo
+                Notification.create({
+                    user_id: order.user_id,
+                    content: 'Shop hủy đơn hàng #'+order_id
+                });
                 return res.send(newState);
             } else return res.send("Đơn hàng không hợp lệ");
         }
@@ -522,5 +641,7 @@ module.exports = {
     totalPrice,
     totalOrder,
     totalOrderPerDay,
-    totalRevenuePerDay
+    totalRevenuePerDay,
+    checkDiscount,
+    listNotification
 }

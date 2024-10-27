@@ -158,7 +158,7 @@ let getInfor = async (req, res, next) => {
         const customer = await User.findOne({
             where: { user_id: customerId, role_id: 2 },
             include: [
-                { model: Customer_Info, attributes: ['customer_name', 'phone_number', 'address'] },
+                { model: Customer_Info, attributes: ['customer_name', 'phone_number', 'address', 'point'] },
             ]
         });
 
@@ -167,6 +167,7 @@ let getInfor = async (req, res, next) => {
             customer_name: customer.Customer_Info.customer_name,
             phone_number: customer.Customer_Info.phone_number,
             address: customer.Customer_Info.address,
+            point: customer.Customer_Info.point,
         });
     } catch (error) {
         console.log(error);

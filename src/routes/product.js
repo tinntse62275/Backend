@@ -10,6 +10,8 @@ router.put('/update', ProductController.update);
 
 router.get('/admin/list', ProductController.listAdminSide);
 
+router.get('/customer/search/:product_name', ProductController.listCustomerSearch);
+
 router.get('/customer/list', ProductController.listCustomerSide);
 
 router.get('/customer/detail/:product_id', ProductController.detailCustomerSide);
