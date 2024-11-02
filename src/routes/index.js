@@ -9,6 +9,8 @@ const productRouter = require('./product');
 const product_variantRouter = require('./product_variant');
 const order = require('./order');
 const feedback = require('./feedback');
+const coupon = require('./coupon');
+const user = require('./user');
 
 function setRoute(server) {
 
@@ -30,6 +32,9 @@ function setRoute(server) {
 
     server.use('/api/feedback', feedback);
 
+    server.use('/api/coupon', coupon);
+
+    server.use('/api/user', user);
 }
 
 module.exports = setRoute;

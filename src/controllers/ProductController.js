@@ -97,75 +97,82 @@ let listCustomerSide = async (req, res, next) => {
         whereClause = { category_id }
 
     try {
-
-
-        // Lấy danh sách tất cả sản phẩm ưu tiên sản phẩm mới nhất
+        // Lấy danh sách sản phẩm độc nhất
         let listProduct = await Product.findAll({
             attributes: ['product_id'],
+            where: whereClause,
+            group: ['product_id'],
             order: [['created_at', 'DESC']],
             raw: true
         });
 
         let listProductVariant = [];
 
-        // Duyệt qua danh sách sản phẩm
         for (let { product_id } of listProduct) {
-            // Lấy danh sách tất cả các màu của sản phẩm đó
-            let listColor = await Product_Variant.findAll({
-                attributes: ['colour_id'],
-                where: { product_id },
-                group: ['colour_id'],
-                raw: true
-            });
-            // Duyệt qua danh sách màu
-            for (let { colour_id } of listColor) {
-                // Tìm tất cả biến thể sản phẩm có cùng màu với nhau
-                let listProductVariantSameColour = await Product_Variant.findAll({
-                    attributes: ['product_variant_id', 'colour_id'],
-                    include: [
-                        {
-                            model: Product, attributes: ['product_id', 'product_name', 'rating', 'sold', 'feedback_quantity'],
-                            include: {
-                                model: Product_Price_History,
-                                attributes: ['price'],
-                                separate: true, order: [['created_at', 'DESC']]
-                            },
-                            where: whereClause
-                        },
-                        { model: Colour, attributes: ['colour_name'] },
-                        { model: Size, attributes: ['size_name'] },
-                        { model: Product_Image, attributes: ['path'] },
-                    ],
-                    where: {
-                        [Op.and]: [
-                            { colour_id },
-                            { state: true },
-                            { quantity: { [Op.gt]: 0 } }
-                        ]
+            // Lấy biến thể đầu tiên cho mỗi màu của sản phẩm
+            let variants = await Product_Variant.findAll({
+                attributes: ['product_variant_id', 'colour_id'],
+                include: [
+                    {
+                        model: Product,
+                        attributes: ['product_id', 'product_name', 'rating', 'sold', 'feedback_quantity'],
+                        include: {
+                            model: Product_Price_History,
+                            attributes: ['price'],
+                            separate: true,
+                            order: [['created_at', 'DESC']],
+                            limit: 1
+                        }
                     },
+                    { model: Colour, attributes: ['colour_name'] },
+                    { model: Size, attributes: ['size_name'] },
+                    { model: Product_Image, attributes: ['path'] }
+                ],
+                where: {
+                    product_id,
+                    state: true,
+                    quantity: { [Op.gt]: 0 }
+                },
+                group: ['colour_id'], // Nhóm theo màu sắc
+                raw: false
+            });
+
+            // Xử lý từng biến thể
+            for (let variant of variants) {
+                // Lấy tất cả size có sẵn cho màu này
+                let sizes = await Product_Variant.findAll({
+                    attributes: [],
+                    include: [{
+                        model: Size,
+                        attributes: ['size_name']
+                    }],
+                    where: {
+                        product_id,
+                        colour_id: variant.colour_id,
+                        state: true,
+                        quantity: { [Op.gt]: 0 }
+                    },
+                    raw: true
                 });
-                // Convert dữ liệu
-                if (listProductVariantSameColour.length) {
-                    let productVariant = {
-                        product_id: listProductVariantSameColour[0].Product.product_id,
-                        product_name: listProductVariantSameColour[0].Product.product_name,
-                        rating: listProductVariantSameColour[0].Product.rating,
-                        sold: listProductVariantSameColour[0].Product.sold,
-                        feedback_quantity: listProductVariantSameColour[0].Product.feedback_quantity,
-                        product_variant_id: listProductVariantSameColour[0].product_variant_id,
-                        colour_id: listProductVariantSameColour[0].colour_id,
-                        colour_name: listProductVariantSameColour[0].Colour.colour_name,
-                        price: listProductVariantSameColour[0].Product.Product_Price_Histories[0].price,
-                        product_image: listProductVariantSameColour[0].Product_Images[0].path,
-                        sizes: []
-                    };
-                    // Duyệt qua danh sách biến thể sản phẩm có cùng màu để cộng dồn danh sách sizes
-                    for (let { Size } of listProductVariantSameColour)
-                        productVariant.sizes.push(Size.size_name);
-                    listProductVariant.push(productVariant);
-                }
+
+                let productVariant = {
+                    product_id: variant.Product.product_id,
+                    product_name: variant.Product.product_name,
+                    rating: variant.Product.rating,
+                    sold: variant.Product.sold,
+                    feedback_quantity: variant.Product.feedback_quantity,
+                    product_variant_id: variant.product_variant_id,
+                    colour_id: variant.colour_id,
+                    colour_name: variant.Colour.colour_name,
+                    price: variant.Product.Product_Price_Histories[0]?.price,
+                    product_image: variant.Product_Images[0]?.path,
+                    sizes: sizes.map(size => size['Size.size_name'])
+                };
+
+                listProductVariant.push(productVariant);
             }
         }
+
         return res.send(listProductVariant);
     } catch (err) {
         console.log(err);

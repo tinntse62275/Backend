@@ -252,7 +252,33 @@ let listNotification = async (req, res, next) => {
     }
     try {
         let notificationList = await Notification.findAll({
-            attributes: [ 'user_id', 'content','created_at'],
+            attributes: ['id', 'user_id', 'content','created_at'],
+            where: { user_id: customer_id, status: 0 },
+            order: [
+                ['created_at', 'DESC']
+            ]
+        });
+        return res.send(notificationList);
+    } catch (err) {
+        console.log(err);
+        return res.status(500).send('Gặp lỗi khi tải dữ liệu vui lòng thử lại');
+        
+    }
+}
+let listNotificationAll = async (req, res, next) => {
+    let customer_id = req.token.customer_id;
+    if (!customer_id) return res.status(400).send({ message: 'Access Token không hợp lệ' });
+
+    try {
+        let customer = await User.findOne({ where: { user_id: customer_id, role_id: 2 } });
+        if (customer == null) return res.status(400).send('User này không tồn tại');
+    } catch (err) {
+        console.log(err);
+        return res.status(500).send('Gặp lỗi khi tạo đơn hàng vui lòng thử lại');
+    }
+    try {
+        let notificationList = await Notification.findAll({
+            attributes: ['id', 'user_id', 'content','created_at'],
             where: { user_id: customer_id },
             order: [
                 ['created_at', 'DESC']
@@ -263,6 +289,25 @@ let listNotification = async (req, res, next) => {
         console.log(err);
         return res.status(500).send('Gặp lỗi khi tải dữ liệu vui lòng thử lại');
         
+    }
+}
+let changeStatusNotification = async (req, res, next) => {
+    let id = req.params.id;
+    if (id === undefined) return res.status(400).send('Trường id không tồn tại');
+    try {
+        notifi = await Notification.findOne({ where: { id } });
+        if(notifi){
+            await Notification.update(
+                { status: 1 },
+                { where: { id: id } }
+            )
+            return res.send({ message: 'Update thành công!' })
+        }else{
+            return res.status(400).send('Notification này không tồn tại');
+        }
+    } catch (err) {
+        console.log(err);
+        return res.status(500).send('Gặp lỗi khi tạo đơn hàng vui lòng thử lại');
     }
 }
 
@@ -643,5 +688,7 @@ module.exports = {
     totalOrderPerDay,
     totalRevenuePerDay,
     checkDiscount,
-    listNotification
+    listNotification,
+    changeStatusNotification,
+    listNotificationAll
 }

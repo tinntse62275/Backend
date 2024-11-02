@@ -1,31 +1,39 @@
 const multer = require('multer');
-const { v4: uuidv4 } = require('uuid');
+const cloudinary = require('cloudinary').v2;
+const { CloudinaryStorage } = require('multer-storage-cloudinary');
 
-const storage = multer.diskStorage({
-    destination: function (req, file, cb) {
-        cb(null, './src/public/images');
-    },
-    filename: function (req, file, cb) {
-        let { originalname } = file;
-        let fileExtension
-        if (file.mimetype == "image/png") {
-            fileExtension = '.png'
-        } else if (file.mimetype == "image/jpg" || file.mimetype == "image/jpeg") {
-            fileExtension = '.jpg'
-        }
-        let uniqueSuffix = uuidv4();
-        cb(null, uniqueSuffix + fileExtension);
+// Cấu hình Cloudinary
+    // Configuration
+cloudinary.config({ 
+    cloud_name: 'dbmrh7gyn', 
+    api_key: '318359977138754', 
+    api_secret: 'TIA0jtCJ2iXSZJWD4-OqW7Ke8xY'
+});
+
+// Cấu hình storage cho Cloudinary
+const storage = new CloudinaryStorage({
+    cloudinary: cloudinary,
+    params: {
+        folder: 'product_images', // tên folder trên Cloudinary
+        resource_type: 'auto', // tự động nhận diện loại file
+        allowed_formats: ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'svg', 'tiff'], // cho phép nhiều định dạng ảnh
+        transformation: [{ width: 500, height: 500, crop: 'limit' }] // có thể thêm các options transform
     }
-})
+});
 
+// Cấu hình multer với Cloudinary storage
 const upload = multer({
     storage: storage,
     fileFilter: (req, file, cb) => {
-        if (file.mimetype == "image/png" || file.mimetype == "image/jpg" || file.mimetype == "image/jpeg") {
+        // Kiểm tra xem file có phải là ảnh không
+        if (file.mimetype.startsWith('image/')) {
             cb(null, true);
         } else {
-            return cb(new Error('Invalid mime type'));
+            cb(new Error('File phải là ảnh'), false);
         }
+    },
+    limits: {
+        fileSize: 1024 * 1024 * 5 // giới hạn file 5MB
     }
 });
 

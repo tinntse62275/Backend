@@ -7,7 +7,8 @@ const User = require('./user');
 const Notification = sequelize.define('Notification', {
     content: { type: DataTypes.STRING, allowNull: true },
     title: { type: DataTypes.STRING, allowNull: true },
-    user_id: { type: DataTypes.CHAR(255), primaryKey: true }
+    user_id: { type: DataTypes.CHAR(255), primaryKey: true },
+    status: { type: DataTypes.INTEGER, allowNull: true }
 }, {
 	timestamps: true,
 	createdAt: 'created_at',

@@ -13,6 +13,10 @@ router.get('/customer/list', jwtAuth, OrderController.listCustomerSide);
 
 router.get('/customer/notification', jwtAuth, OrderController.listNotification);
 
+router.get('/customer/notificationall', jwtAuth, OrderController.listNotificationAll);
+
+router.put('/customer/notification/change-status/:id', OrderController.changeStatusNotification);
+
 router.get('/detail/:order_id', jwtAuth, OrderController.detailCustomerSide);
 
 router.get('/admin/detail/:order_id', OrderController.detailAdminSide);

@@ -5,7 +5,7 @@ const Product_Variant = require('../models/product_variant');
 const Product_Image = require('../models/product_image');
 const Product_Price_History = require('../models/product_price_history');
 const uploadImage = require('../midlewares/uploadImage');
-
+const cloudinary = require('cloudinary').v2;
 let create = async (req, res, next) => {
     uploadImage(req, res, async (err) => {
         if (err) {
@@ -31,13 +31,16 @@ let create = async (req, res, next) => {
                 size_id
             };
             let newProductVariant = await Product_Variant.create(data);
+            
             for (let file of files) {
+                // file.path sẽ là URL của ảnh trên Cloudinary
                 let data = {
-                    path: 'http://localhost:8080/static/images/' + file.path.slice(-40, file.path.length),
+                    path: file.path,
                     product_variant_id: newProductVariant.product_variant_id
                 }
-                let newProductImage = await Product_Image.create(data);
+                await Product_Image.create(data);
             }
+            
             return res.send(newProductVariant)
         } catch (err) {
             console.log(err);
@@ -52,10 +55,13 @@ let update = async (req, res, next) => {
             console.log(err);
             return res.status(400).send(err);
         }
+        
         let product_variant_id = parseInt(req.body.product_variant_id);
         if (product_variant_id === undefined) return res.status(400).send('Trường product_variant_id không tồn tại');
+        
         let quantity = parseInt(req.body.quantity);
         if (quantity === undefined) return res.status(400).send('Trường quantity không tồn tại');
+        
         let files = req.files;
         if (files === undefined) return res.status(400).send('Trường files không tồn tại');
 
@@ -64,32 +70,39 @@ let update = async (req, res, next) => {
                 where: { product_variant_id },
                 include: { model: Product_Image, attributes: ['image_id', 'path'] }
             });
+            
             if (!productVariant) return res.status(400).send('Product Variant này không tồn tại');
 
+            // Xóa ảnh cũ trên Cloudinary và trong database
+            for (let { image_id, path } of productVariant.Product_Images) {
+                // Lấy public_id từ URL Cloudinary
+                const public_id = path.split('/').slice(-1)[0].split('.')[0];
+                
+                // Xóa ảnh trên Cloudinary
+                await cloudinary.uploader.destroy(`product_images/${public_id}`);
+                
+                // Xóa record trong database
+                await Product_Image.destroy({ where: { image_id } });
+            }
+
+            // Lưu ảnh mới
             for (let file of files) {
-                fileName = file.path.slice(-40, file.path.length)
-                let path = 'http://localhost:8080/static/images/' + fileName
+                // file.path sẽ là URL của ảnh trên Cloudinary
                 await Product_Image.create({
-                    path,
+                    path: file.path,
                     product_variant_id
                 });
             }
 
-            for (let { image_id, path } of productVariant.Product_Images) {
-                let directoryPath = __basedir + '\\public\\images\\'
-                let fileName = path.slice(-40, path.length)
-                fs.unlinkSync(directoryPath + fileName)
-                await Product_Image.destroy({ where: { image_id } })
-            }
+            await productVariant.update({ quantity });
 
-            await productVariant.update({ quantity })
-
-            return res.send({ message: "Cập nhật biến thể sản phẩm thành công!" })
+            return res.send({ message: "Cập nhật biến thể sản phẩm thành công!" });
+            
         } catch (err) {
             console.log(err);
             return res.status(500).send('Gặp lỗi khi tải dữ liệu vui lòng thử lại');
         }
-    })
+    });
 }
 
 let onState = async (req, res, next) => {
