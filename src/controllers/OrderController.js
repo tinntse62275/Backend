@@ -93,7 +93,7 @@ let create = async (req, res, next) => {
         }
         let total_order_value = total_product_value + delivery_charges;
         newOrder.update({ total_product_value, delivery_charges, total_order_value });
-        let state = await Order_State.findOne({ where: { state_id: 1, state_name: "Chờ Xác Nhận" } });
+        let state = await Order_State.findOne({ where: { state_id: 1, state_name: "Waiting for Confirmation" } });
         await newOrder.addOrder_State(state);
         if(statusPayment == 'Process'){
             Notification.create({
